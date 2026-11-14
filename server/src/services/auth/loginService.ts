@@ -32,6 +32,10 @@ class LoginService {
     if (!isPasswordValid) {
       throw new AppError(400, invalidCredentials);
     }
+
+    // Reactivate user in cases it is deactivated
+    user.deactivated = false;
+    await user.save();
     
     return user;
   }
