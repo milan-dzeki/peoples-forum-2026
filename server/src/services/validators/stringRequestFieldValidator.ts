@@ -5,15 +5,15 @@ class StringRequestFieldValidator {
   private handleResult({ errors, shouldThrowError }: {
     errors: string[];
     shouldThrowError: boolean
-  }): string[] {
+  }): string {
     if (shouldThrowError && errors.length > 0) {
       throw new AppError(400, errors[0] ?? 'Validation error');
     }
 
-    return errors;
+    return errors.join('. ');
   }
 
-  validate({ field, options = {}, shouldThrowError = false }: StringRequestFieldValidatorParams): string[] {
+  validate({ field, options = {}, shouldThrowError = false }: StringRequestFieldValidatorParams): string {
     const errors: string[] = [];
 
     if (typeof field !== 'string' || field.trim().length === 0) {
