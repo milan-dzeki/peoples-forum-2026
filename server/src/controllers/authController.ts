@@ -3,12 +3,13 @@ import { type RequestWithFiles } from '@/types/request';
 import SignupService from '@/services/auth/signupService';
 import { COOKIE_NAME } from '@/dataConfigs/cookieName';
 import { ApiFilesType } from '@/types/common';
+import catchAsync from '@/utils/catchAsync';
 
 class AuthController {
   constructor (
     private readonly signupService: SignupService
   ) {}
-  signup = async (
+  signup = catchAsync(async (
     request: RequestWithFiles,
     response: Response
   ) => {
@@ -27,7 +28,7 @@ class AuthController {
       message: 'You have successfully signed up to Peoples Forum',
       data: { user }
     });
-  }
+  })
 }
 
 export default AuthController;

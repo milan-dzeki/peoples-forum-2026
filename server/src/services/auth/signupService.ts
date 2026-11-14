@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import type { SignupRequestFields, SignupServiceParams } from '@/types/services/auth/signupService';
 import type { CreateUserData } from '@/types/services/usersService';
 import { SIGNUP_ALLOWED_FIELD_NAMES } from '@/constants/users';
-import { PHOTO_FILE_VALIDATION } from '@/dataConfigs/modelValidators/fileValidationConfigs';
+import { PHOTO_FILE_VALIDATION } from '@/dataConfigs/fileValidationConfigs';
 import { RESOURCE_TYPES } from '@/constants/cloudinary';
 import AppError from '@/utils/appError';
 import StringRequestFieldValidator from '@/services/validators/stringRequestFieldValidator';
