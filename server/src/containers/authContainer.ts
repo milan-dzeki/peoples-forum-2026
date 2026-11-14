@@ -1,10 +1,5 @@
-// src/container/authContainer.ts
-
-// Controllers
-import AuthController from '@/controllers/authController';
-
-// Routers
 import AuthRouter from '@/routes/authRouter';
+import AuthController from '@/controllers/authController';
 
 // Services
 import SignupService from '@/services/auth/signupService';
@@ -15,6 +10,7 @@ import CloudinaryManagementService from '@/services/cloudinaryManagementService'
 // Validators
 import StringRequestFieldValidator from '@/services/validators/stringRequestFieldValidator';
 import FileValidator from '@/services/validators/fileValidator';
+import LoginService from '@/services/auth/loginService';
 
 const stringValidator = new StringRequestFieldValidator();
 const fileValidator = new FileValidator();
@@ -31,7 +27,9 @@ const signupService = new SignupService(
   cloudinaryService
 );
 
-const authController = new AuthController(signupService);
+const loginService = new LoginService(usersService);
+
+const authController = new AuthController(signupService, loginService);
 
 const authRouter = new AuthRouter(authController);
 

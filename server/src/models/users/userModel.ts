@@ -3,7 +3,8 @@ import {
   models,
   model,
   type HydratedDocument,
-  type InferSchemaType
+  type InferSchemaType,
+  Model
 } from 'mongoose';
 import { isEmail } from 'validator';
 import DATABASE_MODEL_NAMES from '@/constants/databaseModels';
@@ -107,9 +108,10 @@ const userSchema = new Schema({
   timestamps: true
 });
 
-export type UserSchemaType = HydratedDocument<InferSchemaType<typeof userSchema>>;
+export type UserType = InferSchemaType<typeof userSchema>;
+export type UserSchemaType = HydratedDocument<UserType>;
 
-const User = models[DATABASE_MODEL_NAMES.USER] ||
+const User = models[DATABASE_MODEL_NAMES.USER] as Model<UserType> ||
   model(DATABASE_MODEL_NAMES.USER, userSchema);
 
 export default User;
