@@ -34,7 +34,7 @@ const globalErrorHandler: ErrorRequestHandler = (
 
   res.status(500).json({
     status: 'error',
-    message: error.message || 'Something went wong'
+    message: error.message || 'Something went wrong'
   });
 };
 
