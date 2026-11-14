@@ -26,8 +26,6 @@ const {
   ROLE,
   PROFILE_IMAGE_URL,
   PROFILE_IMAGE_PUBLIC_ID,
-  BANNER_IMAGE_URL,
-  BANNER_IMAGE_PUBLIC_ID,
   DEACTIVATED,
   LAST_TIME_SEEN
 } = USER_FIELD_NAMES;
@@ -93,16 +91,6 @@ const userSchema = new Schema({
   },
   // for cloudinary - to be able to use it for user deletions
   [PROFILE_IMAGE_PUBLIC_ID]: {
-    type: String,
-    select: false,
-    default: null
-  },
-  [BANNER_IMAGE_URL]: {
-    type: String,
-    default: null
-  },
-  // for cloudinary
-  [BANNER_IMAGE_PUBLIC_ID]: {
     type: String,
     select: false,
     default: null
