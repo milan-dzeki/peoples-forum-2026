@@ -11,8 +11,7 @@ class AuthRouter {
 
   private initRoutes(): void {
     this.router.post('/signup', formidable(), this.authController.signup);
-    // later:
-    // this.router.post('/login', this.authController.login);
+    this.router.post('/login', this.authController.login);
   }
 }
 
