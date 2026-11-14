@@ -37,7 +37,7 @@ class AuthController {
     response: Response
   ) => {
     const body = request.body;
-    const { user, token } = await this.loginService.execute(body);
+    const { user, token } = await this.loginService.login(body);
 
     response.cookie(COOKIE_NAME, token, {
       httpOnly: true,
@@ -51,6 +51,14 @@ class AuthController {
       data: { user }
     });
   });
+
+  isLoggedIn = async (
+    request: RequestWithBodyType,
+    response: Response
+  ) => {
+    const user = await this.loginService.isLoggedIn(request.cookies);
+    return response.status(user ? 200 : 201).json({ user });
+  }
 }
 
 export default AuthController;

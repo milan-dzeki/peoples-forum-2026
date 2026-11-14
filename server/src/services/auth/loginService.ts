@@ -1,9 +1,13 @@
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { isEmail } from 'validator';
-import type { UserSchemaType } from '@/models/users/userModel';
+import User, { type UserSchemaType } from '@/models/users/userModel';
 import AppError from '@/utils/appError';
 import UsersService from '@/services/usersService';
 import createTokenAndFormatUserForResponse from '@/utils/createTokenAndFormatUserForResponse';
+import { COOKIE_NAME } from '@/dataConfigs/cookieName';
+import { ResponseAuthUser } from '@/types/auth';
+import formatUserForResponse from '@/utils/formatUserForResponse';
 
 const invalidCredentials = 'Invalid email or password provided.';
 
@@ -40,13 +44,43 @@ class LoginService {
     return user;
   }
 
-  async execute (body: unknown) {
+  async login (body: unknown) {
     const { email, password } = this.validateBody(body);
     const retrievedUser = await this.getAndValidateUser(email, password);
 
     const { user, token } = createTokenAndFormatUserForResponse(retrievedUser);
 
     return { user, token };
+  }
+
+  async isLoggedIn (requestCookies: Record<string, unknown>): Promise<ResponseAuthUser | null> {
+    if (!requestCookies) {
+      return null;
+    }
+
+    const token = requestCookies[COOKIE_NAME];
+    if (!token || typeof token !== 'string') {
+      return null;
+    }
+
+    let decodedToken: string | jwt.JwtPayload;
+
+    try {
+      decodedToken = jwt.verify(token, process.env.JWT_SECRET!);
+    } catch {
+      return null;
+    }
+    
+    if (!decodedToken || typeof decodedToken !== 'object' || !('userId' in decodedToken) || typeof decodedToken.userId !== 'string') {
+      return null;
+    }
+
+    const user = await User.findById(decodedToken.userId);
+    if (!user) {
+      return null;
+    }
+
+    return formatUserForResponse(user);
   }
 }
 

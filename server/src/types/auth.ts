@@ -1,4 +1,4 @@
-export interface ResponseAuthUserType {
+export interface ResponseAuthUser {
   _id: string;
   firstName: string;
   lastName: string;
