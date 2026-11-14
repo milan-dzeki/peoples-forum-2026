@@ -1,0 +1,19 @@
+import { Router } from 'express';
+import formidable from 'express-formidable';
+import AuthController from '@/controllers/authController';
+
+class AuthRouter {
+  public readonly router = Router();
+
+  constructor(private readonly authController: AuthController) {
+    this.initRoutes();
+  }
+
+  private initRoutes(): void {
+    this.router.post('/signup', formidable(), this.authController.signup);
+    // later:
+    // this.router.post('/login', this.authController.login);
+  }
+}
+
+export default AuthRouter;
