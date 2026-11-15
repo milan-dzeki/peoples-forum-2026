@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import type { RequestWithBodyType, RequestWithFiles } from '@/types/request';
 import SignupService from '@/services/auth/signupService';
-import { ACCESS_TOKEN, REFRESH_TOKEN } from '@/dataConfigs/tokens';
+import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import { ApiFilesType } from '@/types/common';
 import catchAsync from '@/utils/catchAsync';
 import LoginService from '@/services/auth/loginService';
 import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
+import { setAuthCookies } from '@/utils/authCookies';
 
 class AuthController {
   constructor (
@@ -21,21 +22,7 @@ class AuthController {
     const files = request.files as unknown as ApiFilesType;
     const { user, accessToken, refreshToken } = await this.signupService.execute({ fields, files });
 
-    response.cookie(ACCESS_TOKEN.name, accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      maxAge: ACCESS_TOKEN.duration,
-      path: '/'
-    });
-
-    response.cookie(REFRESH_TOKEN.name, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: REFRESH_TOKEN.duration,
-      path: '/'
-    });
+    setAuthCookies(response, { accessToken, refreshToken });
 
     return response.status(201).json({
       status: 'success',
@@ -51,21 +38,7 @@ class AuthController {
     const body = request.body;
     const { user, accessToken, refreshToken } = await this.loginService.login(body);
 
-    response.cookie(ACCESS_TOKEN.name, accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      maxAge: ACCESS_TOKEN.duration,
-      path: '/'
-    });
-
-    response.cookie(REFRESH_TOKEN.name, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: REFRESH_TOKEN.duration,
-      path: '/'
-    });
+    setAuthCookies(response, { accessToken, refreshToken });
 
     return response.status(200).json({
       status: 'success',
@@ -94,20 +67,9 @@ class AuthController {
       refreshToken: newRefreshToken
     } = await this.refreshTokenService.execute(refreshToken);
 
-    response.cookie(ACCESS_TOKEN.name, accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: ACCESS_TOKEN.duration,
-      path: '/'
-    });
-
-    response.cookie(REFRESH_TOKEN.name, newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: REFRESH_TOKEN.duration,
-      path: '/'
+    setAuthCookies(response, {
+      accessToken,
+      refreshToken: newRefreshToken
     });
 
     return response.status(200).json({
