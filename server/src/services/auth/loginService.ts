@@ -12,12 +12,14 @@ import SessionService from './sessionService';
 
 const invalidCredentials = 'Invalid email or password provided.';
 
+interface Dependencies {
+  usersService: UsersService;
+  tokenService: TokenService;
+  sessionService: SessionService;
+}
+
 class LoginService {
-  constructor (
-    private readonly usersService: UsersService,
-    private readonly tokenService: TokenService,
-    private readonly sessionService: SessionService
-  ) {}
+  constructor (private readonly dependencies: Dependencies) {}
 
   private validateBody (body: unknown): { email: string; password: string } {
     if (!body || typeof body !== 'object' || !('email' in body) || !('password' in body)) {
@@ -34,7 +36,7 @@ class LoginService {
   }
 
   private async getAndValidateUser (email: string, password: string): Promise<UserSchemaType> {
-    const user = await this.usersService.getByEmail(email);
+    const user = await this.dependencies.usersService.getByEmail(email);
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new AppError(400, invalidCredentials);
@@ -51,15 +53,15 @@ class LoginService {
     const { email, password } = this.validateBody(body);
     const retrievedUser = await this.getAndValidateUser(email, password);
 
-    const accessToken = this.tokenService.createAccessToken(
+    const accessToken = this.dependencies.tokenService.createAccessToken(
       retrievedUser._id.toString()
     );
 
-    const refreshToken = this.tokenService.generateRefreshToken();
+    const refreshToken = this.dependencies.tokenService.generateRefreshToken();
 
-    const refreshTokenHash = this.tokenService.hashRefreshToken(refreshToken);
+    const refreshTokenHash = this.dependencies.tokenService.hashRefreshToken(refreshToken);
 
-    await this.sessionService.create({
+    await this.dependencies.sessionService.create({
       user: retrievedUser._id.toString(),
       refreshTokenHash,
       expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)
@@ -85,7 +87,7 @@ class LoginService {
     let decodedToken: string | jwt.JwtPayload;
 
     try {
-      decodedToken = this.tokenService.verifyAccessToken(token);
+      decodedToken = this.dependencies.tokenService.verifyAccessToken(token);
     } catch {
       return null;
     }

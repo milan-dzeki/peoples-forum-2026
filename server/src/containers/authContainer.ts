@@ -35,11 +35,11 @@ const signupService = new SignupService({
 });
 
 
-const loginService = new LoginService(usersService, tokenService, sessionService);
+const loginService = new LoginService({ usersService, tokenService, sessionService });
 
-const refreshTokenService = new RefreshTokenService(tokenService, sessionService, usersService);
+const refreshTokenService = new RefreshTokenService({ tokenService, sessionService, usersService });
 
-const authController = new AuthController(signupService, loginService, refreshTokenService);
+const authController = new AuthController({ signupService, loginService, refreshTokenService });
 
 const authRouter = new AuthRouter(authController);
 

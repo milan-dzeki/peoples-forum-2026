@@ -6,12 +6,14 @@ import formatUserForResponse from '@/utils/formatUserForResponse';
 import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import User from '@/models/users/userModel';
 
+interface Dependencies {
+  tokenService: TokenService,
+  sessionService: SessionService,
+  usersService: UsersService
+}
+
 class RefreshTokenService {
-  constructor(
-    private readonly tokenService: TokenService,
-    private readonly sessionService: SessionService,
-    private readonly usersService: UsersService
-  ) {}
+  constructor(private readonly dependencies: Dependencies) {}
 
   async execute(refreshToken: string) {
     if (!refreshToken || typeof refreshToken !== 'string') {
@@ -19,10 +21,10 @@ class RefreshTokenService {
     }
 
     const oldTokenHash =
-      this.tokenService.hashRefreshToken(refreshToken);
+      this.dependencies.tokenService.hashRefreshToken(refreshToken);
 
     // Find the user associated with this session.
-    const session = await this.sessionService.findByTokenHash(
+    const session = await this.dependencies.sessionService.findByTokenHash(
       oldTokenHash
     );
 
@@ -35,23 +37,23 @@ class RefreshTokenService {
     );
 
     if (!user) {
-      await this.sessionService.revoke(oldTokenHash);
+      await this.dependencies.sessionService.revoke(oldTokenHash);
       throw new AppError(401, 'User no longer exists');
     }
 
     // Generate replacement tokens.
-    const newAccessToken = this.tokenService.createAccessToken(
+    const newAccessToken = this.dependencies.tokenService.createAccessToken(
       user._id.toString()
     );
 
     const newRefreshToken =
-      this.tokenService.generateRefreshToken();
+      this.dependencies.tokenService.generateRefreshToken();
 
     const newRefreshTokenHash =
-      this.tokenService.hashRefreshToken(newRefreshToken);
+      this.dependencies.tokenService.hashRefreshToken(newRefreshToken);
 
     // Atomically replace the old refresh token.
-    const updatedSession = await this.sessionService.rotate({
+    const updatedSession = await this.dependencies.sessionService.rotate({
       oldTokenHash,
       newTokenHash: newRefreshTokenHash,
       expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)

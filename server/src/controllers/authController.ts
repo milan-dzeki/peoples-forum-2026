@@ -8,19 +8,21 @@ import LoginService from '@/services/auth/loginService';
 import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
 import { setAuthCookies } from '@/utils/authCookies';
 
+interface Dependencies {
+  signupService: SignupService;
+  loginService: LoginService;
+  refreshTokenService: RefreshTokenService;
+}
+
 class AuthController {
-  constructor (
-    private readonly signupService: SignupService,
-    private readonly loginService: LoginService,
-    private readonly refreshTokenService: RefreshTokenService
-  ) {}
+  constructor (private readonly dependencies: Dependencies) {}
   signup = catchAsync(async (
     request: RequestWithFiles,
     response: Response
   ) => {
     const fields = request.fields as unknown as Record<string, string>;
     const files = request.files as unknown as ApiFilesType;
-    const { user, accessToken, refreshToken } = await this.signupService.execute({ fields, files });
+    const { user, accessToken, refreshToken } = await this.dependencies.signupService.execute({ fields, files });
 
     setAuthCookies(response, { accessToken, refreshToken });
 
@@ -36,7 +38,7 @@ class AuthController {
     response: Response
   ) => {
     const body = request.body;
-    const { user, accessToken, refreshToken } = await this.loginService.login(body);
+    const { user, accessToken, refreshToken } = await this.dependencies.loginService.login(body);
 
     setAuthCookies(response, { accessToken, refreshToken });
 
@@ -51,7 +53,7 @@ class AuthController {
     request: RequestWithBodyType,
     response: Response
   ) => {
-    const user = await this.loginService.isLoggedIn(request.cookies);
+    const user = await this.dependencies.loginService.isLoggedIn(request.cookies);
     return response.status(user ? 200 : 201).json({ user });
   }
 
@@ -65,7 +67,7 @@ class AuthController {
       user,
       accessToken,
       refreshToken: newRefreshToken
-    } = await this.refreshTokenService.execute(refreshToken);
+    } = await this.dependencies.refreshTokenService.execute(refreshToken);
 
     setAuthCookies(response, {
       accessToken,
