@@ -6,11 +6,13 @@ import { ApiFilesType } from '@/types/common';
 import catchAsync from '@/utils/catchAsync';
 import LoginService from '@/services/auth/loginService';
 import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
-import { setAuthCookies } from '@/utils/authCookies';
+import { clearAuthCookies, setAuthCookies } from '@/utils/authCookies';
+import LogoutService from '@/services/auth/logoutService';
 
 interface Dependencies {
   signupService: SignupService;
   loginService: LoginService;
+  logoutService: LogoutService;
   refreshTokenService: RefreshTokenService;
 }
 
@@ -46,6 +48,21 @@ class AuthController {
       status: 'success',
       message: 'Login successful',
       data: { user }
+    });
+  });
+
+  logout = catchAsync(async (
+    request: Request,
+    response: Response
+  ) => {
+    const refreshToken = request.cookies?.[REFRESH_TOKEN.name];
+    await this.dependencies.logoutService.execute(refreshToken);
+
+    clearAuthCookies(response);
+
+    return response.status(200).json({
+      status: 'success',
+      message: 'Logout successful'
     });
   });
 
