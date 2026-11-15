@@ -4,16 +4,19 @@ import { isEmail } from 'validator';
 import User, { type UserSchemaType } from '@/models/users/userModel';
 import AppError from '@/utils/appError';
 import UsersService from '@/services/usersService';
-import createTokenAndFormatUserForResponse from '@/utils/createTokenAndFormatUserForResponse';
-import { COOKIE_NAME } from '@/dataConfigs/cookieName';
+import { ACCESS_TOKEN, REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import { ResponseAuthUser } from '@/types/auth';
 import formatUserForResponse from '@/utils/formatUserForResponse';
+import TokenService from './tokenService';
+import SessionService from './sessionService';
 
 const invalidCredentials = 'Invalid email or password provided.';
 
 class LoginService {
   constructor (
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
+    private readonly tokenService: TokenService,
+    private readonly sessionService: SessionService
   ) {}
 
   private validateBody (body: unknown): { email: string; password: string } {
@@ -48,9 +51,25 @@ class LoginService {
     const { email, password } = this.validateBody(body);
     const retrievedUser = await this.getAndValidateUser(email, password);
 
-    const { user, token } = createTokenAndFormatUserForResponse(retrievedUser);
+    const accessToken = this.tokenService.createAccessToken(
+      retrievedUser._id.toString()
+    );
 
-    return { user, token };
+    const refreshToken = this.tokenService.generateRefreshToken();
+
+    const refreshTokenHash = this.tokenService.hashRefreshToken(refreshToken);
+
+    await this.sessionService.create({
+      user: retrievedUser._id.toString(),
+      refreshTokenHash,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)
+    });
+
+    return {
+      user: formatUserForResponse(retrievedUser),
+      accessToken,
+      refreshToken
+    };
   }
 
   async isLoggedIn (requestCookies: Record<string, unknown>): Promise<ResponseAuthUser | null> {
@@ -58,7 +77,7 @@ class LoginService {
       return null;
     }
 
-    const token = requestCookies[COOKIE_NAME];
+    const token = requestCookies[ACCESS_TOKEN.name];
     if (!token || typeof token !== 'string') {
       return null;
     }
@@ -66,7 +85,7 @@ class LoginService {
     let decodedToken: string | jwt.JwtPayload;
 
     try {
-      decodedToken = jwt.verify(token, process.env.JWT_SECRET!);
+      decodedToken = this.tokenService.verifyAccessToken(token);
     } catch {
       return null;
     }
