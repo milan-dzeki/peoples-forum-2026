@@ -23,7 +23,6 @@ class RefreshTokenService {
     const oldTokenHash =
       this.dependencies.tokenService.hashRefreshToken(refreshToken);
 
-    // Find the user associated with this session.
     const session = await this.dependencies.sessionService.findByTokenHash(
       oldTokenHash
     );
@@ -41,7 +40,6 @@ class RefreshTokenService {
       throw new AppError(401, 'User no longer exists');
     }
 
-    // Generate replacement tokens.
     const newAccessToken = this.dependencies.tokenService.createAccessToken(
       user._id.toString()
     );
@@ -52,7 +50,6 @@ class RefreshTokenService {
     const newRefreshTokenHash =
       this.dependencies.tokenService.hashRefreshToken(newRefreshToken);
 
-    // Atomically replace the old refresh token.
     const updatedSession = await this.dependencies.sessionService.rotate({
       oldTokenHash,
       newTokenHash: newRefreshTokenHash,
