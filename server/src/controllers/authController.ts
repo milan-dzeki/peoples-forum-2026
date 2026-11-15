@@ -1,29 +1,30 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import type { RequestWithBodyType, RequestWithFiles } from '@/types/request';
 import SignupService from '@/services/auth/signupService';
-import { COOKIE_NAME } from '@/dataConfigs/cookieName';
+import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import { ApiFilesType } from '@/types/common';
 import catchAsync from '@/utils/catchAsync';
 import LoginService from '@/services/auth/loginService';
+import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
+import { setAuthCookies } from '@/utils/authCookies';
+
+interface Dependencies {
+  signupService: SignupService;
+  loginService: LoginService;
+  refreshTokenService: RefreshTokenService;
+}
 
 class AuthController {
-  constructor (
-    private readonly signupService: SignupService,
-    private readonly loginService: LoginService
-  ) {}
+  constructor (private readonly dependencies: Dependencies) {}
   signup = catchAsync(async (
     request: RequestWithFiles,
     response: Response
   ) => {
     const fields = request.fields as unknown as Record<string, string>;
     const files = request.files as unknown as ApiFilesType;
-    const { user, token } = await this.signupService.execute({ fields, files });
+    const { user, accessToken, refreshToken } = await this.dependencies.signupService.execute({ fields, files });
 
-    response.cookie(COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict'
-    });
+    setAuthCookies(response, { accessToken, refreshToken });
 
     return response.status(201).json({
       status: 'success',
@@ -37,13 +38,9 @@ class AuthController {
     response: Response
   ) => {
     const body = request.body;
-    const { user, token } = await this.loginService.login(body);
+    const { user, accessToken, refreshToken } = await this.dependencies.loginService.login(body);
 
-    response.cookie(COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict'
-    });
+    setAuthCookies(response, { accessToken, refreshToken });
 
     return response.status(200).json({
       status: 'success',
@@ -56,9 +53,32 @@ class AuthController {
     request: RequestWithBodyType,
     response: Response
   ) => {
-    const user = await this.loginService.isLoggedIn(request.cookies);
+    const user = await this.dependencies.loginService.isLoggedIn(request.cookies);
     return response.status(user ? 200 : 201).json({ user });
   }
+
+  refresh = catchAsync(async (
+    request: Request,
+    response: Response
+  ) => {
+    const refreshToken = request.cookies?.[REFRESH_TOKEN.name];
+
+    const {
+      user,
+      accessToken,
+      refreshToken: newRefreshToken
+    } = await this.dependencies.refreshTokenService.execute(refreshToken);
+
+    setAuthCookies(response, {
+      accessToken,
+      refreshToken: newRefreshToken
+    });
+
+    return response.status(200).json({
+      status: 'success',
+      data: { user }
+    });
+  });
 }
 
 export default AuthController;

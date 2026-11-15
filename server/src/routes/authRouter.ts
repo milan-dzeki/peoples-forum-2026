@@ -13,6 +13,7 @@ class AuthRouter {
     this.router.post('/signup', formidable(), this.authController.signup);
     this.router.post('/login', this.authController.login);
     this.router.get('/is-logged-in', this.authController.isLoggedIn);
+    this.router.post('/refresh', this.authController.refresh);
   }
 }
 

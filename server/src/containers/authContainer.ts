@@ -11,25 +11,35 @@ import CloudinaryManagementService from '@/services/cloudinaryManagementService'
 import StringRequestFieldValidator from '@/services/validators/stringRequestFieldValidator';
 import FileValidator from '@/services/validators/fileValidator';
 import LoginService from '@/services/auth/loginService';
+import TokenService from '@/services/auth/tokenService';
+import SessionService from '@/services/auth/sessionService';
+import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
 
 const stringValidator = new StringRequestFieldValidator();
 const fileValidator = new FileValidator();
 
 const usersService = new UsersService();
 const errorsService = new ErrorsService();
-const cloudinaryService = new CloudinaryManagementService();
+const cloudinaryManagementService = new CloudinaryManagementService();
+const tokenService = new TokenService();
+const sessionService = new SessionService();
 
-const signupService = new SignupService(
+const signupService = new SignupService({
   stringValidator,
   fileValidator,
   usersService,
   errorsService,
-  cloudinaryService
-);
+  cloudinaryManagementService,
+  tokenService,
+  sessionService
+});
 
-const loginService = new LoginService(usersService);
 
-const authController = new AuthController(signupService, loginService);
+const loginService = new LoginService({ usersService, tokenService, sessionService });
+
+const refreshTokenService = new RefreshTokenService({ tokenService, sessionService, usersService });
+
+const authController = new AuthController({ signupService, loginService, refreshTokenService });
 
 const authRouter = new AuthRouter(authController);
 
