@@ -14,6 +14,7 @@ import LoginService from '@/services/auth/loginService';
 import TokenService from '@/services/auth/tokenService';
 import SessionService from '@/services/auth/sessionService';
 import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
+import LogoutService from '@/services/auth/logoutService';
 
 const stringValidator = new StringRequestFieldValidator();
 const fileValidator = new FileValidator();
@@ -34,12 +35,13 @@ const signupService = new SignupService({
   sessionService
 });
 
-
 const loginService = new LoginService({ usersService, tokenService, sessionService });
+
+const logoutService = new LogoutService({ tokenService, sessionService });
 
 const refreshTokenService = new RefreshTokenService({ tokenService, sessionService, usersService });
 
-const authController = new AuthController({ signupService, loginService, refreshTokenService });
+const authController = new AuthController({ signupService, loginService, logoutService, refreshTokenService });
 
 const authRouter = new AuthRouter(authController);
 
