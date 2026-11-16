@@ -2,7 +2,7 @@ import type { ValidatableFile } from '@/types/services/validators/fileValidatorS
 import AppError from '@/utils/appError';
 
 class FileValidatorService {
-  private handleResult({ errors, shouldThrowError }: {
+  private handleResult ({ errors, shouldThrowError }: {
     errors: string[];
     shouldThrowError: boolean
   }): string {
@@ -13,7 +13,7 @@ class FileValidatorService {
     return errors.join('. ');
   }
 
-  private isValidatableFile(file: unknown): file is ValidatableFile {
+  private isValidatableFile (file: unknown): file is ValidatableFile {
     if (typeof file !== 'object' || file === null) {
       return false;
     }
@@ -27,7 +27,7 @@ class FileValidatorService {
     );
   }
 
-  validate({
+  validate ({
     file,
     maxAllowedSize,
     allowedTypes,

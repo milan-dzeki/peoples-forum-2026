@@ -42,7 +42,9 @@ class SignupService {
       return email.invalidEmailErrorMsg;
     }
 
-    const emailTaken = await this.dependencies.usersService.isEmailTaken(providedEmail)
+    const { usersService } = this.dependencies;
+
+    const emailTaken = await usersService.isEmailTaken(providedEmail)
 
     if (emailTaken) {
       return email.emailExistsInDatabaseErrorMsg;
@@ -146,7 +148,7 @@ class SignupService {
     };
   }
 
-  private async prepareUserData({ fields, file }: { fields: SignupRequestFields; file: File & { path: string } | undefined }): Promise<CreateUserData> {
+  private async prepareUserData ({ fields, file }: { fields: SignupRequestFields; file: File & { path: string } | undefined }): Promise<CreateUserData> {
     const { passwordService, cloudinaryManagementService } = this.dependencies;
 
     const hashedPassword = await passwordService.hashPassword(fields.password);
@@ -165,7 +167,7 @@ class SignupService {
     };
   }
 
-  async execute(request: SignupServiceParams) {
+  async execute (request: SignupServiceParams) {
     let profileImagePublicIdForCleanUp: string | null = null;
 
     const {

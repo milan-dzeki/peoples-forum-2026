@@ -71,7 +71,7 @@ class RefreshTokenService {
     return { newAccessToken, newRefreshToken };
   }
 
-  async execute(refreshToken: unknown): Promise<{
+  async execute (refreshToken: unknown): Promise<{
     user: ResponseAuthUser;
     accessToken: string;
     refreshToken: string;

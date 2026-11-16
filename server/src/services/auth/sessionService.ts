@@ -1,7 +1,7 @@
 import Session, { type SessionSchemaType } from '@/models/sessionModel';
 
 class SessionService {
-  async create(params: {
+  async create (params: {
     user: string;
     refreshTokenHash: string;
     expiresAt: Date;
@@ -10,7 +10,7 @@ class SessionService {
     return session;
   }
 
-  async rotate(params: {
+  async rotate (params: {
     oldTokenHash: string;
     newTokenHash: string;
     expiresAt: Date;
@@ -30,15 +30,15 @@ class SessionService {
     return updatedSession;
   }
 
-  async revoke(refreshTokenHash: string): Promise<void> {
+  async revoke (refreshTokenHash: string): Promise<void> {
     await Session.deleteOne({ refreshTokenHash });
   }
 
-  async revokeForAllDevices(refreshTokenHash: string): Promise<void> {
+  async revokeForAllDevices (refreshTokenHash: string): Promise<void> {
     await Session.deleteMany({ refreshTokenHash });
   }
 
-  async findByTokenHash(tokenHash: string): Promise<SessionSchemaType | null> {
+  async findByTokenHash (tokenHash: string): Promise<SessionSchemaType | null> {
     return Session.findOne({ refreshTokenHash: tokenHash });
   }
 }

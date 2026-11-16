@@ -6,7 +6,7 @@ class PasswordResetTokenService {
     return passwordResetToken;
   }
 
-  async create(params: {
+  async create (params: {
     user: string;
     tokenHash: string;
     expiresAt: Date;
@@ -15,7 +15,7 @@ class PasswordResetTokenService {
     return passwordResetToken;
   }
 
-  async findValidToken(tokenHash: string): Promise<PasswordResetTokenSchemaType | null> {
+  async findValidToken (tokenHash: string): Promise<PasswordResetTokenSchemaType | null> {
     const passwordResetToken = await PasswordResetToken.findOne({
       tokenHash,
       expiresAt: { $gt: new Date() }
@@ -23,11 +23,11 @@ class PasswordResetTokenService {
     return passwordResetToken;
   }
 
-  async revokeAllForUser(userId: string): Promise<void> {
+  async revokeAllForUser (userId: string): Promise<void> {
     await PasswordResetToken.deleteMany({ user: userId });
   }
 
-  async revoke(tokenHash: string): Promise<void> {
+  async revoke (tokenHash: string): Promise<void> {
     await PasswordResetToken.deleteOne({ tokenHash });
   }
 }
