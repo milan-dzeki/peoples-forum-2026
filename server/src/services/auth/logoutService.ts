@@ -14,7 +14,7 @@ class LogoutService {
       return;
     }
 
-    const refreshTokenHash = this.dependencies.tokenService.hashRefreshToken(refreshToken);
+    const refreshTokenHash = this.dependencies.tokenService.hashToken(refreshToken);
     await this.dependencies.sessionService.revoke(refreshTokenHash);
   }
 }
