@@ -5,6 +5,7 @@ import PasswordResetTokenService from '@/services/auth/passwordResetTokenService
 import EmailService from '@/services/emailService';
 import { isEmail } from 'validator';
 import AppError from '@/utils/appError';
+import withTransaction from '@/utils/withTansaction';
 
 interface Dependencies {
   usersService: UsersService;
@@ -39,6 +40,7 @@ class ForgotPasswordService {
     }
 
     const existingPasswordResetToken = await passwordResetTokenService.get(user._id.toString());
+
     if (
       existingPasswordResetToken &&
       Date.now() - existingPasswordResetToken.createdAt.getTime() < 60 * 1000
@@ -46,22 +48,25 @@ class ForgotPasswordService {
       throw new AppError(403, 'Less than a minute seem to have passed before you requested password reset. Try again after minute expires');
     }
 
-    await passwordResetTokenService.revokeAllForUser(
-      user._id.toString()
-    );
-
     const token = tokenService.generateRandomToken();
-
     const tokenHash = tokenService.hashToken(token);
 
     const expiresAt = new Date(
       Date.now() + this.expirationMinutes * 60 * 1000
     );
 
-    await passwordResetTokenService.create({
-      user: user._id.toString(),
-      tokenHash,
-      expiresAt
+    await withTransaction(async (session) => {
+      await passwordResetTokenService.revokeAllForUser(
+        user._id.toString(),
+        session
+      );
+
+      await passwordResetTokenService.create({
+        user: user._id.toString(),
+        tokenHash,
+        expiresAt,
+        session
+      });
     });
 
     const resetUrl =

@@ -1,5 +1,6 @@
 import User, { type UserSchemaType } from '@/models/users/userModel';
 import { USER_FIELD_NAMES } from '@/constants/users';
+import type { ClientSession } from 'mongoose';
 import type { CreateUserData } from '@/types/services/usersService';
 import AppError from '@/utils/appError';
 
@@ -11,8 +12,11 @@ class UsersService {
     return !!exists;
   }
 
-  async create (data: CreateUserData): Promise<UserSchemaType> {
-    const user = await User.create(data);
+  async create (data: CreateUserData, session: ClientSession): Promise<UserSchemaType> {
+    const [user] = await User.create([data], { session });
+    if (!user) {
+      throw new AppError(500, 'User creation failed.');
+    }
     return user;
   }
 

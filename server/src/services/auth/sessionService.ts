@@ -1,12 +1,18 @@
+import type { ClientSession } from 'mongoose';
 import Session, { type SessionSchemaType } from '@/models/sessionModel';
+import AppError from '@/utils/appError';
 
 class SessionService {
   async create (params: {
     user: string;
     refreshTokenHash: string;
     expiresAt: Date;
-  }): Promise<SessionSchemaType> {
-    const session = await Session.create(params);
+  }, mongoSession: ClientSession): Promise<SessionSchemaType> {
+    const [session] = await Session.create([params], { session: mongoSession });
+
+    if (!session) {
+      throw new AppError(500, 'Session creation failed.');
+    }
     return session;
   }
 
@@ -34,8 +40,8 @@ class SessionService {
     await Session.deleteOne({ refreshTokenHash });
   }
 
-  async revokeForAllDevices (refreshTokenHash: string): Promise<void> {
-    await Session.deleteMany({ refreshTokenHash });
+  async revokeForAllDevices (refreshTokenHash: string, mongoSession?: ClientSession): Promise<void> {
+    await Session.deleteMany({ refreshTokenHash }, { ...(mongoSession && { session: mongoSession }) });
   }
 
   async findByTokenHash (tokenHash: string): Promise<SessionSchemaType | null> {

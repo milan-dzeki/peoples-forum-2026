@@ -1,3 +1,4 @@
+import type { ClientSession } from 'mongoose';
 import PasswordResetToken, { type PasswordResetTokenSchemaType } from '@/models/passwordResetTokenModel';
 
 class PasswordResetTokenService {
@@ -10,6 +11,7 @@ class PasswordResetTokenService {
     user: string;
     tokenHash: string;
     expiresAt: Date;
+    session?: ClientSession;
   }): Promise<PasswordResetTokenSchemaType> {
     const passwordResetToken = await PasswordResetToken.create(params);
     return passwordResetToken;
@@ -23,12 +25,12 @@ class PasswordResetTokenService {
     return passwordResetToken;
   }
 
-  async revokeAllForUser (userId: string): Promise<void> {
-    await PasswordResetToken.deleteMany({ user: userId });
+  async revokeAllForUser (userId: string, session?: ClientSession): Promise<void> {
+    await PasswordResetToken.deleteMany({ user: userId }, { ...(session && { session }) });
   }
 
-  async revoke (tokenHash: string): Promise<void> {
-    await PasswordResetToken.deleteOne({ tokenHash });
+  async revoke (tokenHash: string, session?: ClientSession): Promise<void> {
+    await PasswordResetToken.deleteOne({ tokenHash }, { ...(session && { session }) });
   }
 }
 

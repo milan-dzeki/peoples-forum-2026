@@ -1,4 +1,5 @@
 import { isEmail } from 'validator';
+import type { UserSchemaType } from '@/models/users/userModel';
 import type { SignupRequestFields, SignupServiceParams } from '@/types/services/auth/signupService';
 import type { CreateUserData } from '@/types/services/usersService';
 import { SIGNUP_ALLOWED_FIELD_NAMES } from '@/constants/users';
@@ -16,6 +17,7 @@ import SessionService from './sessionService';
 import formatUserForResponse from '@/utils/formatUserForResponse';
 import TokenService from './tokenService';
 import PasswordService from './passwordService';
+import withTransaction from '@/utils/withTansaction';
 
 interface Dependencies {
   stringValidatorService: StringRequestFieldValidatorService;
@@ -183,22 +185,26 @@ class SignupService {
       const createData = await this.prepareUserData(validatedData);
       profileImagePublicIdForCleanUp = createData.profileImagePublicId || null;
 
-      const newUser = await usersService.create(createData);
+      const refreshToken = tokenService.generateRandomToken();
+      const refreshTokenHash = tokenService.hashToken(refreshToken);
+
+      const newUser = await withTransaction<UserSchemaType>(async (session) => {
+        const user = await usersService.create(createData, session);
+
+        await sessionService.create({
+          user: user._id.toString(),
+          refreshTokenHash,
+          expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)
+        }, session);
+
+        return user;
+      });
+      
 
       const accessToken = tokenService.createAccessToken(
         newUser._id.toString()
       );
   
-      const refreshToken = tokenService.generateRandomToken();
-  
-      const refreshTokenHash = tokenService.hashToken(refreshToken);
-  
-      await sessionService.create({
-        user: newUser._id.toString(),
-        refreshTokenHash,
-        expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)
-      });
-
       return {
         user: formatUserForResponse(newUser),
         accessToken,

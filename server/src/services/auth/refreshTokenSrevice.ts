@@ -53,9 +53,7 @@ class RefreshTokenService {
     const { tokenService, sessionService } = this.dependencies;
 
     const newAccessToken = tokenService.createAccessToken(userId);
-
     const newRefreshToken = tokenService.generateRandomToken();
-
     const newRefreshTokenHash = tokenService.hashToken(newRefreshToken);
 
     const updatedSession = await sessionService.rotate({
