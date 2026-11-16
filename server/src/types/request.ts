@@ -18,3 +18,7 @@ export type ControllerType = (
   next: NextFunction
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => Promise<Response<any, Record<string, any>> | undefined>;
+
+export interface RequestWithUserId extends Request {
+  userId: string;
+}
