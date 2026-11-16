@@ -20,17 +20,24 @@ import PasswordResetTokenService from '@/services/auth/passwordResetTokenService
 import ForgotPasswordService from '@/services/auth/forgotPasswordService';
 import ResetPasswordService from '@/services/auth/resetPasswordService';
 import PasswordService from '@/services/auth/passwordService';
+import UserFieldsValidatorService from '@/services/validators/userFieldsValidatorService';
 
-const stringValidatorService = new StringRequestFieldValidatorService();
+const stringRequestFieldValidatorService = new StringRequestFieldValidatorService();
 const fileValidatorService = new FileValidatorService();
+const userFieldsValidatorService = new UserFieldsValidatorService({
+  stringRequestFieldValidatorService,
+  fileValidatorService
+});
 
-const usersService = new UsersService();
 const errorsService = new ErrorsService();
+const usersService = new UsersService({
+  userFieldsValidatorService,
+  errorsService
+});
 const cloudinaryManagementService = new CloudinaryManagementService();
 const tokenService = new TokenService();
 const sessionService = new SessionService();
 const emailService = new EmailService();
-const stringRequestFieldValidatorService = new StringRequestFieldValidatorService();
 const passwordService = new PasswordService();
 
 const passwordResetTokenService = new PasswordResetTokenService();
@@ -42,7 +49,7 @@ const forgotPasswordService = new ForgotPasswordService({
 });
 
 const signupService = new SignupService({
-  stringValidatorService,
+  stringRequestFieldValidatorService,
   fileValidatorService,
   usersService,
   errorsService,
@@ -83,8 +90,4 @@ const authController = new AuthController({
 
 const authRouter = new AuthRouter(authController);
 
-export {
-  authRouter,
-  authController,
-  signupService
-};
+export { authRouter };
