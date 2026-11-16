@@ -24,7 +24,7 @@ class PasswordResetTokenService {
   }
 
   async revokeAllForUser(userId: string): Promise<void> {
-    await PasswordResetToken.deleteMany({ userId });
+    await PasswordResetToken.deleteMany({ user: userId });
   }
 
   async revoke(tokenHash: string): Promise<void> {
