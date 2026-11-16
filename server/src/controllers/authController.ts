@@ -10,6 +10,7 @@ import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
 import LogoutService from '@/services/auth/logoutService';
 import ForgotPasswordService from '@/services/auth/forgotPasswordService';
 import ResetPasswordService from '@/services/auth/resetPasswordService';
+import AppError from '@/utils/appError';
 
 interface Dependencies {
   signupService: SignupService;
@@ -92,21 +93,29 @@ class AuthController {
     const refreshToken = request.cookies?.[REFRESH_TOKEN.name];
     const { refreshTokenService } = this.dependencies;
 
-    const {
-      user,
-      accessToken,
-      refreshToken: newRefreshToken
-    } = await refreshTokenService.execute(refreshToken);
+    try {
+      const {
+        user,
+        accessToken,
+        refreshToken: newRefreshToken
+      } = await refreshTokenService.execute(refreshToken);
 
-    setAuthCookies(response, {
-      accessToken,
-      refreshToken: newRefreshToken
-    });
+      setAuthCookies(response, {
+        accessToken,
+        refreshToken: newRefreshToken
+      });
 
-    return response.status(200).json({
-      status: 'success',
-      data: { user }
-    });
+      return response.status(200).json({
+        status: 'success',
+        data: { user }
+      });
+    } catch (error) {
+      if (error instanceof AppError && error.statusCode === 401) {
+        clearAuthCookies(response);
+      }
+
+      throw error;
+    }
   });
 
   forgotPassword = catchAsync(async (
