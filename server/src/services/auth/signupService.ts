@@ -6,7 +6,7 @@ import { SIGNUP_ALLOWED_FIELD_NAMES } from '@/constants/users';
 import { PHOTO_FILE_VALIDATION } from '@/dataConfigs/fileValidationConfigs';
 import { RESOURCE_TYPES } from '@/constants/cloudinary';
 import AppError from '@/utils/appError';
-import StringRequestFieldValidator from '@/services/validators/stringRequestFieldValidator';
+import StringRequestFieldValidatorService from '@/services/validators/stringRequestFieldValidatorService';
 import userModelValidationConfig from '@/dataConfigs/modelValidators/userModelValidationConfig';
 import UsersService from '@/services/usersService';
 import ErrorsService from '@/services/errorsService';
@@ -18,7 +18,7 @@ import formatUserForResponse from '@/utils/formatUserForResponse';
 import TokenService from './tokenService';
 
 interface Dependencies {
-  stringValidator: StringRequestFieldValidator;
+  stringValidator: StringRequestFieldValidatorService;
   fileValidator: FileValidator;
   usersService: UsersService;
   errorsService: ErrorsService;
