@@ -64,9 +64,8 @@ class ForgotPasswordService {
       await passwordResetTokenService.create({
         user: user._id.toString(),
         tokenHash,
-        expiresAt,
-        session
-      });
+        expiresAt
+      }, session);
     });
 
     const resetUrl =

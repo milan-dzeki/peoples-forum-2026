@@ -1,5 +1,6 @@
 import type { ClientSession } from 'mongoose';
 import PasswordResetToken, { type PasswordResetTokenSchemaType } from '@/models/passwordResetTokenModel';
+import AppError from '@/utils/appError';
 
 class PasswordResetTokenService {
   async get (userId: string): Promise<PasswordResetTokenSchemaType | null> {
@@ -11,9 +12,11 @@ class PasswordResetTokenService {
     user: string;
     tokenHash: string;
     expiresAt: Date;
-    session?: ClientSession;
-  }): Promise<PasswordResetTokenSchemaType> {
-    const passwordResetToken = await PasswordResetToken.create(params);
+  }, session?: ClientSession): Promise<PasswordResetTokenSchemaType> {
+    const [passwordResetToken] = await PasswordResetToken.create([params], ...(session ? [{ session }] : []));
+    if (!passwordResetToken) {
+      throw new AppError(500, 'Failed to create reset password token.');
+    }
     return passwordResetToken;
   }
 

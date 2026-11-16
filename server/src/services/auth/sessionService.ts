@@ -7,8 +7,8 @@ class SessionService {
     user: string;
     refreshTokenHash: string;
     expiresAt: Date;
-  }, mongoSession: ClientSession): Promise<SessionSchemaType> {
-    const [session] = await Session.create([params], { session: mongoSession });
+  }, mongoSession?: ClientSession): Promise<SessionSchemaType> {
+    const [session] = await Session.create([params], ...(mongoSession ? [{ session: mongoSession }] : []));
 
     if (!session) {
       throw new AppError(500, 'Session creation failed.');
