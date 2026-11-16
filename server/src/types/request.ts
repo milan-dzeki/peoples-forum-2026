@@ -22,3 +22,7 @@ export type ControllerType<R extends Request> = (
 export interface RequestWithUserId extends Request {
   userId: string;
 }
+
+export interface RequestWithUserIdAndFiles extends RequestWithFiles {
+  userId: string;
+}

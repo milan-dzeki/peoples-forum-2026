@@ -1,5 +1,5 @@
 import type { Response } from 'express';
-import type { RequestWithUserId } from '@/types/request';
+import type { RequestWithUserId, RequestWithUserIdAndFiles } from '@/types/request';
 import UsersService from '@/services/usersService';
 import catchAsync from '@/utils/catchAsync';
 
@@ -24,6 +24,24 @@ class UsersController {
       status: 'success',
       message: 'Names updated successfully.',
       data: updatedFields
+    });
+  });
+
+  updateProfileImage = catchAsync (async (
+    request: RequestWithUserIdAndFiles,
+    response: Response
+  ) => {
+    const userId = request.userId;
+    const profileImageFile = request.files?.profileImage;
+
+    const newProfileImageUrl = await this.userService.updateProfileImage(userId, profileImageFile);
+
+    return response.status(200).json({
+      status: 'success',
+      message: 'Profile image updated successfully.',
+      data: {
+        newProfileImageUrl
+      }
     });
   });
 }

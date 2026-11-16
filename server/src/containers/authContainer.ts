@@ -24,6 +24,7 @@ import UserFieldsValidatorService from '@/services/validators/userFieldsValidato
 
 const stringRequestFieldValidatorService = new StringRequestFieldValidatorService();
 const fileValidatorService = new FileValidatorService();
+const cloudinaryManagementService = new CloudinaryManagementService();
 const userFieldsValidatorService = new UserFieldsValidatorService({
   stringRequestFieldValidatorService,
   fileValidatorService
@@ -32,9 +33,9 @@ const userFieldsValidatorService = new UserFieldsValidatorService({
 const errorsService = new ErrorsService();
 const usersService = new UsersService({
   userFieldsValidatorService,
-  errorsService
+  errorsService,
+  cloudinaryManagementService
 });
-const cloudinaryManagementService = new CloudinaryManagementService();
 const tokenService = new TokenService();
 const sessionService = new SessionService();
 const emailService = new EmailService();
@@ -50,7 +51,6 @@ const forgotPasswordService = new ForgotPasswordService({
 
 const signupService = new SignupService({
   stringRequestFieldValidatorService,
-  fileValidatorService,
   usersService,
   errorsService,
   cloudinaryManagementService,

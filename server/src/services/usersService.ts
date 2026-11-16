@@ -5,12 +5,15 @@ import type { CreateUserData } from '@/types/services/usersService';
 import AppError from '@/utils/appError';
 import UserFieldsValidatorService from '@/services/validators/userFieldsValidatorService';
 import ErrorsService from '@/services/errorsService';
+import CloudinaryManagementService from './cloudinaryManagementService';
+import { RESOURCE_TYPES } from '@/constants/cloudinary';
 
 const { EMAIL, PASSWORD } = USER_FIELD_NAMES;
 
 interface Dependencies {
   userFieldsValidatorService: UserFieldsValidatorService;
   errorsService: ErrorsService;
+  cloudinaryManagementService: CloudinaryManagementService;
 }
 
 class UsersService {
@@ -80,6 +83,33 @@ class UsersService {
       lastName: user.lastName,
       fullName: user.fullName
     };
+  }
+
+  async updateProfileImage (userId: string, profileImageFile: unknown): Promise<string> {
+    const { userFieldsValidatorService, cloudinaryManagementService } = this.dependencies;
+
+    userFieldsValidatorService.profilePhoto(profileImageFile, true);
+    const user = await this.getByIdAndThrowIfNotFound(userId);
+
+    const oldProfileImagePublicId = user.profileImagePublicId;
+
+    const uploadedProfileImage = await cloudinaryManagementService.uploadSingleFile({
+      file: profileImageFile as File & { path: string },
+      resourceType: RESOURCE_TYPES.IMAGE
+    });
+
+    user.profileImageUrl = uploadedProfileImage.secure_url;
+    user.profileImagePublicId = uploadedProfileImage.public_id;
+    await user.save();
+
+    if (oldProfileImagePublicId) {
+      await cloudinaryManagementService.deleteSingleFile({
+        publicId: oldProfileImagePublicId,
+        resourceType: RESOURCE_TYPES.IMAGE
+      });
+    }
+
+    return user.profileImageUrl;
   }
 }
 

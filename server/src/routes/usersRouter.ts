@@ -1,5 +1,5 @@
 import { Router } from 'express';
-// import formidable from 'express-formidable';
+import formidable from 'express-formidable';
 import UsersController from '@/controllers/usersController';
 import AuthMiddlewares from '@/middlewares/auth';
 
@@ -20,7 +20,8 @@ class UsersRouter {
 
     this.router.use(authMiddlewares.isAuth);
 
-    this.router.patch('/names', usersController.updateNames);
+    this.router.patch('/me/names', usersController.updateNames);
+    this.router.patch('/me/profile-image', formidable(), usersController.updateProfileImage);
   }
 }
 

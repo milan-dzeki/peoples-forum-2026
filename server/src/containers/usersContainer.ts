@@ -2,6 +2,7 @@ import UsersController from '@/controllers/usersController';
 import AuthMiddlewares from '@/middlewares/auth';
 import UsersRouter from '@/routes/usersRouter';
 import TokenService from '@/services/auth/tokenService';
+import CloudinaryManagementService from '@/services/cloudinaryManagementService';
 import ErrorsService from '@/services/errorsService';
 import UsersService from '@/services/usersService';
 import FileValidatorService from '@/services/validators/fileValidatorService';
@@ -10,6 +11,7 @@ import UserFieldsValidatorService from '@/services/validators/userFieldsValidato
 
 const stringRequestFieldValidatorService = new StringRequestFieldValidatorService();
 const fileValidatorService = new FileValidatorService();
+const cloudinaryManagementService = new CloudinaryManagementService();
 const userFieldsValidatorService = new UserFieldsValidatorService({
   stringRequestFieldValidatorService,
   fileValidatorService
@@ -17,7 +19,8 @@ const userFieldsValidatorService = new UserFieldsValidatorService({
 const errorsService = new ErrorsService();
 const usersService = new UsersService({
   userFieldsValidatorService,
-  errorsService
+  errorsService,
+  cloudinaryManagementService
 });
 const tokenService = new TokenService();
 

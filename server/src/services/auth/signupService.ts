@@ -3,7 +3,6 @@ import type { UserSchemaType } from '@/models/users/userModel';
 import type { SignupRequestFields, SignupServiceParams } from '@/types/services/auth/signupService';
 import type { CreateUserData } from '@/types/services/usersService';
 import { SIGNUP_ALLOWED_FIELD_NAMES } from '@/constants/users';
-import { PHOTO_FILE_VALIDATION } from '@/dataConfigs/fileValidationConfigs';
 import { RESOURCE_TYPES } from '@/constants/cloudinary';
 import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import AppError from '@/utils/appError';
@@ -11,7 +10,6 @@ import StringRequestFieldValidatorService from '@/services/validators/stringRequ
 import userModelValidationConfig from '@/dataConfigs/modelValidators/userModelValidationConfig';
 import UsersService from '@/services/usersService';
 import ErrorsService from '@/services/errorsService';
-import FileValidatorService from '@/services/validators/fileValidatorService';
 import CloudinaryManagementService from '@/services/cloudinaryManagementService';
 import SessionService from './sessionService';
 import formatUserForResponse from '@/utils/formatUserForResponse';
@@ -22,7 +20,6 @@ import UserFieldsValidatorService from '../validators/userFieldsValidatorService
 
 interface Dependencies {
   stringRequestFieldValidatorService: StringRequestFieldValidatorService;
-  fileValidatorService: FileValidatorService;
   usersService: UsersService;
   errorsService: ErrorsService;
   cloudinaryManagementService: CloudinaryManagementService;
@@ -94,7 +91,6 @@ class SignupService {
     const  {
       userFieldsValidatorService,
       stringRequestFieldValidatorService,
-      fileValidatorService,
       errorsService
     } = this.dependencies;
 
@@ -115,12 +111,7 @@ class SignupService {
       ),
       ...(profileImageFile
         ? {
-            profilePhoto: fileValidatorService.validate({
-              file: profileImageFile,
-              maxAllowedSize: PHOTO_FILE_VALIDATION.allowedSize,
-              allowedTypes: PHOTO_FILE_VALIDATION.allowedTypes,
-              entityName: 'Profile image',
-            }),
+            profilePhoto: userFieldsValidatorService.profilePhoto(profileImageFile)
           }
         : {}),
     };
