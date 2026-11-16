@@ -20,10 +20,11 @@ class RefreshTokenService {
       throw new AppError(401, 'Invalid refresh token');
     }
 
-    const oldTokenHash =
-      this.dependencies.tokenService.hashToken(refreshToken);
+    const { tokenService, sessionService } = this.dependencies;
 
-    const session = await this.dependencies.sessionService.findByTokenHash(
+    const oldTokenHash = tokenService.hashToken(refreshToken);
+
+    const session = await sessionService.findByTokenHash(
       oldTokenHash
     );
 
@@ -36,21 +37,19 @@ class RefreshTokenService {
     );
 
     if (!user) {
-      await this.dependencies.sessionService.revoke(oldTokenHash);
+      await sessionService.revoke(oldTokenHash);
       throw new AppError(401, 'User no longer exists');
     }
 
-    const newAccessToken = this.dependencies.tokenService.createAccessToken(
+    const newAccessToken = tokenService.createAccessToken(
       user._id.toString()
     );
 
-    const newRefreshToken =
-      this.dependencies.tokenService.generateRandomToken();
+    const newRefreshToken = tokenService.generateRandomToken();
 
-    const newRefreshTokenHash =
-      this.dependencies.tokenService.hashToken(newRefreshToken);
+    const newRefreshTokenHash = tokenService.hashToken(newRefreshToken);
 
-    const updatedSession = await this.dependencies.sessionService.rotate({
+    const updatedSession = await sessionService.rotate({
       oldTokenHash,
       newTokenHash: newRefreshTokenHash,
       expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)

@@ -37,9 +37,9 @@ class LoginService {
   }
 
   private async getAndValidateUser (email: string, password: string): Promise<UserSchemaType> {
-    const { passwordService } = this.dependencies;
+    const { usersService, passwordService } = this.dependencies;
 
-    const user = await this.dependencies.usersService.getByEmail(email);
+    const user = await usersService.getByEmail(email);
     const isPasswordValid = await passwordService.comparePasswords(password, user.password);
     if (!isPasswordValid) {
       throw new AppError(400, invalidCredentials);
@@ -56,15 +56,17 @@ class LoginService {
     const { email, password } = this.validateBody(body);
     const retrievedUser = await this.getAndValidateUser(email, password);
 
-    const accessToken = this.dependencies.tokenService.createAccessToken(
+    const { tokenService, sessionService } = this.dependencies;
+
+    const accessToken = tokenService.createAccessToken(
       retrievedUser._id.toString()
     );
 
-    const refreshToken = this.dependencies.tokenService.generateRandomToken();
+    const refreshToken = tokenService.generateRandomToken();
 
-    const refreshTokenHash = this.dependencies.tokenService.hashToken(refreshToken);
+    const refreshTokenHash = tokenService.hashToken(refreshToken);
 
-    await this.dependencies.sessionService.create({
+    await sessionService.create({
       user: retrievedUser._id.toString(),
       refreshTokenHash,
       expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)
@@ -89,8 +91,10 @@ class LoginService {
 
     let decodedToken: string | jwt.JwtPayload;
 
+    const { tokenService } = this.dependencies;
+
     try {
-      decodedToken = this.dependencies.tokenService.verifyAccessToken(token);
+      decodedToken = tokenService.verifyAccessToken(token);
     } catch {
       return null;
     }

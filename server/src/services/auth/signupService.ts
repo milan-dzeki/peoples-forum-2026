@@ -85,8 +85,14 @@ class SignupService {
     const passwordConfirmVal = fields.passwordConfirm ?? '';
     const profileImageFile = files?.profileImage;
 
+    const  {
+      stringValidatorService,
+      fileValidatorService,
+      errorsService
+    } = this.dependencies;
+
     const errors = {
-      firstName: this.dependencies.stringValidatorService.validate({
+      firstName: stringValidatorService.validate({
         field: firstNameVal,
         options: {
           minLength: firstName.minLength,
@@ -94,7 +100,7 @@ class SignupService {
           maxWordsAllowed: firstName.maxWordsAllowed,
         },
       }),
-      lastName: this.dependencies.stringValidatorService.validate({
+      lastName: stringValidatorService.validate({
         field: lastNameVal,
         options: {
           minLength: lastName.minLength,
@@ -103,7 +109,7 @@ class SignupService {
         },
       }),
       email: await this.validateEmail(emailVal),
-      password: this.dependencies.stringValidatorService.validate({
+      password: stringValidatorService.validate({
         field: passwordVal,
         options: {
           minLength: password.minLength,
@@ -116,7 +122,7 @@ class SignupService {
       ),
       ...(profileImageFile
         ? {
-            profilePhoto: this.dependencies.fileValidatorService.validate({
+            profilePhoto: fileValidatorService.validate({
               file: profileImageFile,
               maxAllowedSize: PHOTO_FILE_VALIDATION.allowedSize,
               allowedTypes: PHOTO_FILE_VALIDATION.allowedTypes,
@@ -127,7 +133,7 @@ class SignupService {
     };
 
 
-    this.dependencies.errorsService.throwFieldsErrorIfDataInvalid(errors);
+    errorsService.throwFieldsErrorIfDataInvalid(errors);
 
     return {
       fields: {
@@ -141,11 +147,11 @@ class SignupService {
   }
 
   private async prepareUserData({ fields, file }: { fields: SignupRequestFields; file: File & { path: string } | undefined }): Promise<CreateUserData> {
-    const { passwordService } = this.dependencies;
+    const { passwordService, cloudinaryManagementService } = this.dependencies;
 
     const hashedPassword = await passwordService.hashPassword(fields.password);
     const uploadedProfilePhoto = file
-      ? await this.dependencies.cloudinaryManagementService.uploadSingleFile({ file, resourceType: RESOURCE_TYPES.IMAGE })
+      ? await cloudinaryManagementService.uploadSingleFile({ file, resourceType: RESOURCE_TYPES.IMAGE })
       : { secure_url: null, public_id: null };
 
     return {
@@ -162,23 +168,30 @@ class SignupService {
   async execute(request: SignupServiceParams) {
     let profileImagePublicIdForCleanUp: string | null = null;
 
+    const {
+      usersService,
+      tokenService,
+      sessionService,
+      cloudinaryManagementService
+    } = this.dependencies;
+
     try {
       const validatedData = await this.validate(request);
       
       const createData = await this.prepareUserData(validatedData);
       profileImagePublicIdForCleanUp = createData.profileImagePublicId || null;
 
-      const newUser = await this.dependencies.usersService.create(createData);
+      const newUser = await usersService.create(createData);
 
-      const accessToken = this.dependencies.tokenService.createAccessToken(
+      const accessToken = tokenService.createAccessToken(
         newUser._id.toString()
       );
   
-      const refreshToken = this.dependencies.tokenService.generateRandomToken();
+      const refreshToken = tokenService.generateRandomToken();
   
-      const refreshTokenHash = this.dependencies.tokenService.hashToken(refreshToken);
+      const refreshTokenHash = tokenService.hashToken(refreshToken);
   
-      await this.dependencies.sessionService.create({
+      await sessionService.create({
         user: newUser._id.toString(),
         refreshTokenHash,
         expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)
@@ -191,7 +204,7 @@ class SignupService {
       };
     } catch (error: unknown) {
       if (profileImagePublicIdForCleanUp) {
-        await this.dependencies.cloudinaryManagementService.deleteSingleFile({
+        await cloudinaryManagementService.deleteSingleFile({
           publicId: profileImagePublicIdForCleanUp,
           resourceType: RESOURCE_TYPES.IMAGE
         });
