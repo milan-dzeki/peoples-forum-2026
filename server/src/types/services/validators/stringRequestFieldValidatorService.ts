@@ -13,8 +13,9 @@ interface StringValidateOptions {
   };
 }
 
-export interface StringRequestFieldValidatorParams {
+export interface StringRequestFieldValidatorServiceParams {
   field: unknown;
   options?: StringValidateOptions;
+  fieldName?: string;
   shouldThrowError?: boolean;
 }
