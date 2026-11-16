@@ -16,6 +16,10 @@ class UsersService {
     return user;
   }
 
+  async getById (id: string): Promise<UserSchemaType | null> {
+    return await User.findById(id);
+  }
+
   async getByEmail (providedEmail: string): Promise<UserSchemaType> {
     const user = await User.findOne({ [EMAIL]: providedEmail.toLowerCase() }).select(`+${PASSWORD}`);
 
