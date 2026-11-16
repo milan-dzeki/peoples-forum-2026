@@ -13,11 +13,17 @@ class StringRequestFieldValidatorService {
     return errors.join('. ');
   }
 
-  validate ({ field, options = {}, fieldName, shouldThrowError = false }: StringRequestFieldValidatorServiceParams): string {
+  validate ({
+    field,
+    options = {},
+    fieldName,
+    requiredErrorMsg,
+    shouldThrowError = false
+  }: StringRequestFieldValidatorServiceParams): string {
     const errors: string[] = [];
 
     if (typeof field !== 'string' || field.trim().length === 0) {
-      errors.push(`Invalid ${fieldName ?? 'field'}: text is required.`);
+      errors.push(requiredErrorMsg ??`Invalid ${fieldName ?? 'field'}: text is required.`);
       return this.handleResult({ errors, shouldThrowError });
     }
 
