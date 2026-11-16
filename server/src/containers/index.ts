@@ -1,0 +1,1 @@
+export { authRouter, authController, signupService } from './authContainer';
