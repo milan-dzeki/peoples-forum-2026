@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 import type { RequestWithUserId } from '@/types/request';
-import UsersService from '@/services/user/usersService';
+import UsersService from '@/services/usersService';
 import catchAsync from '@/utils/catchAsync';
 
 class UsersController {

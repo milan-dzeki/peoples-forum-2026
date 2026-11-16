@@ -56,7 +56,8 @@ const signupService = new SignupService({
   cloudinaryManagementService,
   tokenService,
   sessionService,
-  passwordService
+  passwordService,
+  userFieldsValidatorService
 });
 
 const loginService = new LoginService({

@@ -3,7 +3,7 @@ import AuthMiddlewares from '@/middlewares/auth';
 import UsersRouter from '@/routes/usersRouter';
 import TokenService from '@/services/auth/tokenService';
 import ErrorsService from '@/services/errorsService';
-import UsersService from '@/services/user/usersService';
+import UsersService from '@/services/usersService';
 import FileValidatorService from '@/services/validators/fileValidatorService';
 import StringRequestFieldValidatorService from '@/services/validators/stringRequestFieldValidatorService';
 import UserFieldsValidatorService from '@/services/validators/userFieldsValidatorService';

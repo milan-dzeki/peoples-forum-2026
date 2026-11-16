@@ -18,6 +18,7 @@ import formatUserForResponse from '@/utils/formatUserForResponse';
 import TokenService from './tokenService';
 import PasswordService from './passwordService';
 import withTransaction from '@/utils/withTansaction';
+import UserFieldsValidatorService from '../validators/userFieldsValidatorService';
 
 interface Dependencies {
   stringRequestFieldValidatorService: StringRequestFieldValidatorService;
@@ -28,6 +29,7 @@ interface Dependencies {
   tokenService: TokenService;
   sessionService: SessionService;
   passwordService: PasswordService;
+  userFieldsValidatorService: UserFieldsValidatorService;
 }
 
 class SignupService {
@@ -80,7 +82,7 @@ class SignupService {
 
     const { fields, files } = request;
 
-    const { firstName, lastName, password } = userModelValidationConfig;
+    const { password } = userModelValidationConfig;
 
     const firstNameVal = fields.firstName?.trim() ?? '';
     const lastNameVal = fields.lastName?.trim() ?? '';
@@ -90,28 +92,15 @@ class SignupService {
     const profileImageFile = files?.profileImage;
 
     const  {
+      userFieldsValidatorService,
       stringRequestFieldValidatorService,
       fileValidatorService,
       errorsService
     } = this.dependencies;
 
     const errors = {
-      firstName: stringRequestFieldValidatorService.validate({
-        field: firstNameVal,
-        options: {
-          minLength: firstName.minLength,
-          maxLength: firstName.maxLength,
-          maxWordsAllowed: firstName.maxWordsAllowed,
-        },
-      }),
-      lastName: stringRequestFieldValidatorService.validate({
-        field: lastNameVal,
-        options: {
-          minLength: lastName.minLength,
-          maxLength: lastName.maxLength,
-          maxWordsAllowed: lastName.maxWordsAllowed,
-        },
-      }),
+      firstName: userFieldsValidatorService.firstName(firstNameVal),
+      lastName: userFieldsValidatorService.lastName(lastNameVal),
       email: await this.validateEmail(emailVal),
       password: stringRequestFieldValidatorService.validate({
         field: passwordVal,
