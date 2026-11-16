@@ -15,6 +15,9 @@ import TokenService from '@/services/auth/tokenService';
 import SessionService from '@/services/auth/sessionService';
 import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
 import LogoutService from '@/services/auth/logoutService';
+import EmailService from '@/services/emailService';
+import PasswordResetTokenService from '@/services/auth/passwordResetTokenService';
+import ForgotPasswordService from '@/services/auth/forgotPasswordService';
 
 const stringValidator = new StringRequestFieldValidator();
 const fileValidator = new FileValidator();
@@ -24,6 +27,14 @@ const errorsService = new ErrorsService();
 const cloudinaryManagementService = new CloudinaryManagementService();
 const tokenService = new TokenService();
 const sessionService = new SessionService();
+const emailService = new EmailService();
+const passwordResetTokenService = new PasswordResetTokenService();
+const forgotPasswordService = new ForgotPasswordService({
+  usersService,
+  tokenService,
+  passwordResetTokenService,
+  emailService
+});
 
 const signupService = new SignupService({
   stringValidator,
@@ -41,7 +52,7 @@ const logoutService = new LogoutService({ tokenService, sessionService });
 
 const refreshTokenService = new RefreshTokenService({ tokenService, sessionService, usersService });
 
-const authController = new AuthController({ signupService, loginService, logoutService, refreshTokenService });
+const authController = new AuthController({ signupService, loginService, logoutService, refreshTokenService, forgotPasswordService });
 
 const authRouter = new AuthRouter(authController);
 

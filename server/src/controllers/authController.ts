@@ -1,19 +1,21 @@
 import { Request, Response } from 'express';
 import type { RequestWithBodyType, RequestWithFiles } from '@/types/request';
-import SignupService from '@/services/auth/signupService';
 import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import { ApiFilesType } from '@/types/common';
 import catchAsync from '@/utils/catchAsync';
+import { clearAuthCookies, setAuthCookies } from '@/utils/authCookies';
+import SignupService from '@/services/auth/signupService';
 import LoginService from '@/services/auth/loginService';
 import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
-import { clearAuthCookies, setAuthCookies } from '@/utils/authCookies';
 import LogoutService from '@/services/auth/logoutService';
+import ForgotPasswordService from '@/services/auth/forgotPasswordService';
 
 interface Dependencies {
   signupService: SignupService;
   loginService: LoginService;
   logoutService: LogoutService;
   refreshTokenService: RefreshTokenService;
+  forgotPasswordService: ForgotPasswordService;
 }
 
 class AuthController {
@@ -94,6 +96,20 @@ class AuthController {
     return response.status(200).json({
       status: 'success',
       data: { user }
+    });
+  });
+
+  forgotPassword = catchAsync(async (
+    request: RequestWithBodyType,
+    response: Response
+  ) => {
+    await this.dependencies.forgotPasswordService.execute(
+      request.body.email
+    );
+
+    return response.status(200).json({
+      status: 'success',
+      message: 'If an account exists with that email, you will receive a password reset link.'
     });
   });
 }

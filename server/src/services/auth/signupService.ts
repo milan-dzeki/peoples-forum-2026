@@ -184,9 +184,9 @@ class SignupService {
         newUser._id.toString()
       );
   
-      const refreshToken = this.dependencies.tokenService.generateRefreshToken();
+      const refreshToken = this.dependencies.tokenService.generateRandomToken();
   
-      const refreshTokenHash = this.dependencies.tokenService.hashRefreshToken(refreshToken);
+      const refreshTokenHash = this.dependencies.tokenService.hashToken(refreshToken);
   
       await this.dependencies.sessionService.create({
         user: newUser._id.toString(),

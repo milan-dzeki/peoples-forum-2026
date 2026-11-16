@@ -21,7 +21,7 @@ class RefreshTokenService {
     }
 
     const oldTokenHash =
-      this.dependencies.tokenService.hashRefreshToken(refreshToken);
+      this.dependencies.tokenService.hashToken(refreshToken);
 
     const session = await this.dependencies.sessionService.findByTokenHash(
       oldTokenHash
@@ -45,10 +45,10 @@ class RefreshTokenService {
     );
 
     const newRefreshToken =
-      this.dependencies.tokenService.generateRefreshToken();
+      this.dependencies.tokenService.generateRandomToken();
 
     const newRefreshTokenHash =
-      this.dependencies.tokenService.hashRefreshToken(newRefreshToken);
+      this.dependencies.tokenService.hashToken(newRefreshToken);
 
     const updatedSession = await this.dependencies.sessionService.rotate({
       oldTokenHash,
