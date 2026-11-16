@@ -48,7 +48,8 @@ const signupService = new SignupService({
   errorsService,
   cloudinaryManagementService,
   tokenService,
-  sessionService
+  sessionService,
+  passwordService
 });
 
 const loginService = new LoginService({ usersService, tokenService, sessionService });

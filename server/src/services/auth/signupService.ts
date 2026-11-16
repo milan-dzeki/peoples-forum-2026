@@ -1,10 +1,10 @@
 import { isEmail } from 'validator';
-import bcrypt from 'bcryptjs';
 import type { SignupRequestFields, SignupServiceParams } from '@/types/services/auth/signupService';
 import type { CreateUserData } from '@/types/services/usersService';
 import { SIGNUP_ALLOWED_FIELD_NAMES } from '@/constants/users';
 import { PHOTO_FILE_VALIDATION } from '@/dataConfigs/fileValidationConfigs';
 import { RESOURCE_TYPES } from '@/constants/cloudinary';
+import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import AppError from '@/utils/appError';
 import StringRequestFieldValidatorService from '@/services/validators/stringRequestFieldValidatorService';
 import userModelValidationConfig from '@/dataConfigs/modelValidators/userModelValidationConfig';
@@ -12,10 +12,10 @@ import UsersService from '@/services/usersService';
 import ErrorsService from '@/services/errorsService';
 import FileValidatorService from '@/services/validators/fileValidatorService';
 import CloudinaryManagementService from '@/services/cloudinaryManagementService';
-import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import SessionService from './sessionService';
 import formatUserForResponse from '@/utils/formatUserForResponse';
 import TokenService from './tokenService';
+import PasswordService from './passwordService';
 
 interface Dependencies {
   stringValidatorService: StringRequestFieldValidatorService;
@@ -25,6 +25,7 @@ interface Dependencies {
   cloudinaryManagementService: CloudinaryManagementService;
   tokenService: TokenService;
   sessionService: SessionService;
+  passwordService: PasswordService;
 }
 
 class SignupService {
@@ -139,21 +140,10 @@ class SignupService {
     };
   }
 
-  private async hashPassword (password: string): Promise<string> {
-    try {
-      const hashedPassword = await bcrypt.hash(password, 12);
-      if (!hashedPassword) {
-        throw new AppError(500, 'Failed to setup password. Try again.');
-      }
-
-      return hashedPassword;
-    } catch {
-      throw new AppError(500, 'Failed to setup password. Try again.');
-    }
-  }
-
   private async prepareUserData({ fields, file }: { fields: SignupRequestFields; file: File & { path: string } | undefined }): Promise<CreateUserData> {
-    const hashedPassword = await this.hashPassword(fields.password);
+    const { passwordService } = this.dependencies;
+
+    const hashedPassword = await passwordService.hashPassword(fields.password);
     const uploadedProfilePhoto = file
       ? await this.dependencies.cloudinaryManagementService.uploadSingleFile({ file, resourceType: RESOURCE_TYPES.IMAGE })
       : { secure_url: null, public_id: null };
