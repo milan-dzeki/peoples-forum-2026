@@ -34,6 +34,10 @@ class SessionService {
     await Session.deleteOne({ refreshTokenHash });
   }
 
+  async revokeForAllDevices(refreshTokenHash: string): Promise<void> {
+    await Session.deleteMany({ refreshTokenHash });
+  }
+
   async findByTokenHash(tokenHash: string): Promise<SessionSchemaType | null> {
     return Session.findOne({ refreshTokenHash: tokenHash });
   }
