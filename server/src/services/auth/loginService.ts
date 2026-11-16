@@ -52,26 +52,31 @@ class LoginService {
     return user;
   }
 
-  async login (body: unknown) {
-    const { email, password } = this.validateBody(body);
-    const retrievedUser = await this.getAndValidateUser(email, password);
-
+  private async createTokens (userId: string): Promise<{ accessToken: string; refreshToken: string }> {
     const { tokenService, sessionService } = this.dependencies;
 
-    const accessToken = tokenService.createAccessToken(
-      retrievedUser._id.toString()
-    );
-
+    const accessToken = tokenService.createAccessToken(userId);
     const refreshToken = tokenService.generateRandomToken();
-
     const refreshTokenHash = tokenService.hashToken(refreshToken);
 
     await sessionService.create({
-      user: retrievedUser._id.toString(),
+      user: userId,
       refreshTokenHash,
       expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)
     });
 
+    return { accessToken, refreshToken };
+  }
+
+  async login (body: unknown): Promise<{
+    user: ResponseAuthUser;
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const { email, password } = this.validateBody(body);
+    const retrievedUser = await this.getAndValidateUser(email, password);
+    const { accessToken, refreshToken } = await this.createTokens(retrievedUser._id.toString());
+    
     return {
       user: formatUserForResponse(retrievedUser),
       accessToken,
