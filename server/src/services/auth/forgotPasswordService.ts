@@ -32,10 +32,18 @@ class ForgotPasswordService {
       throw new AppError(422, 'Valid email format must be provided.');
     }
 
-    const user = await usersService.getByEmail(email);
+    const user = await usersService.getByEmail(email.toLowerCase());
 
     if (!user) {
       return;
+    }
+
+    const existingPasswordResetToken = await passwordResetTokenService.get(user._id.toString());
+    if (
+      existingPasswordResetToken &&
+      Date.now() - existingPasswordResetToken.createdAt.getTime() < 60 * 1000
+    ) {
+      throw new AppError(403, 'Less than a minute seem to have passed before you requested password reset. Try again after minute expires');
     }
 
     await passwordResetTokenService.revokeAllForUser(

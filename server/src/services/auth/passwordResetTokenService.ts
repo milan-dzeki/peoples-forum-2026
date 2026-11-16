@@ -1,6 +1,11 @@
 import PasswordResetToken, { type PasswordResetTokenSchemaType } from '@/models/passwordResetTokenModel';
 
 class PasswordResetTokenService {
+  async get (userId: string): Promise<PasswordResetTokenSchemaType | null> {
+    const passwordResetToken = await PasswordResetToken.findOne({ user: userId });
+    return passwordResetToken;
+  }
+
   async create(params: {
     user: string;
     tokenHash: string;
