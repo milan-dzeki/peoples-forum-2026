@@ -52,7 +52,12 @@ const signupService = new SignupService({
   passwordService
 });
 
-const loginService = new LoginService({ usersService, tokenService, sessionService });
+const loginService = new LoginService({
+  usersService,
+  tokenService,
+  sessionService,
+  passwordService
+});
 
 const logoutService = new LogoutService({ tokenService, sessionService });
 

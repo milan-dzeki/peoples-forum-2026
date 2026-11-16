@@ -1,4 +1,3 @@
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { isEmail } from 'validator';
 import User, { type UserSchemaType } from '@/models/users/userModel';
@@ -9,6 +8,7 @@ import { ResponseAuthUser } from '@/types/auth';
 import formatUserForResponse from '@/utils/formatUserForResponse';
 import TokenService from './tokenService';
 import SessionService from './sessionService';
+import PasswordService from './passwordService';
 
 const invalidCredentials = 'Invalid email or password provided.';
 
@@ -16,6 +16,7 @@ interface Dependencies {
   usersService: UsersService;
   tokenService: TokenService;
   sessionService: SessionService;
+  passwordService: PasswordService;
 }
 
 class LoginService {
@@ -36,8 +37,10 @@ class LoginService {
   }
 
   private async getAndValidateUser (email: string, password: string): Promise<UserSchemaType> {
+    const { passwordService } = this.dependencies;
+
     const user = await this.dependencies.usersService.getByEmail(email);
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await passwordService.comparePasswords(password, user.password);
     if (!isPasswordValid) {
       throw new AppError(400, invalidCredentials);
     }

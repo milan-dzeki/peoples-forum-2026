@@ -14,6 +14,10 @@ class PasswordService {
       throw new AppError(500, 'Failed to setup password. Try again.');
     }
   }
+
+  async comparePasswords (password: string, hashedPassword: string): Promise<boolean> {
+    return await bcrypt.compare(password, hashedPassword);
+  }
 }
 
 export default PasswordService;
