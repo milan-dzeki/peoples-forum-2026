@@ -9,6 +9,7 @@ import LoginService from '@/services/auth/loginService';
 import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
 import LogoutService from '@/services/auth/logoutService';
 import ForgotPasswordService from '@/services/auth/forgotPasswordService';
+import ResetPasswordService from '@/services/auth/resetPasswordService';
 
 interface Dependencies {
   signupService: SignupService;
@@ -16,6 +17,7 @@ interface Dependencies {
   logoutService: LogoutService;
   refreshTokenService: RefreshTokenService;
   forgotPasswordService: ForgotPasswordService;
+  resetPasswordService: ResetPasswordService;
 }
 
 class AuthController {
@@ -110,6 +112,22 @@ class AuthController {
     return response.status(200).json({
       status: 'success',
       message: 'If an account exists with that email, you will receive a password reset link.'
+    });
+  });
+
+  resetPassword = catchAsync (async (
+    request: RequestWithBodyType,
+    response: Response
+  ) => {
+    await this.dependencies.resetPasswordService.execute({
+      newPassword: request.body?.newPassword,
+      newPasswordConfirm: request.body?.newPasswordConfirm,
+      token: request.body?.token
+    });
+
+    return response.status(200).json({
+      status: 'success',
+      message: 'Password reset successfully. You can log in now.'
     });
   });
 }

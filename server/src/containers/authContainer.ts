@@ -8,7 +8,7 @@ import ErrorsService from '@/services/errorsService';
 import CloudinaryManagementService from '@/services/cloudinaryManagementService';
 
 // Validators
-import StringRequestFieldValidator from '@/services/validators/stringRequestFieldValidator';
+import StringRequestFieldValidatorService from '@/services/validators/stringRequestFieldValidatorService';
 import FileValidator from '@/services/validators/fileValidator';
 import LoginService from '@/services/auth/loginService';
 import TokenService from '@/services/auth/tokenService';
@@ -18,8 +18,10 @@ import LogoutService from '@/services/auth/logoutService';
 import EmailService from '@/services/emailService';
 import PasswordResetTokenService from '@/services/auth/passwordResetTokenService';
 import ForgotPasswordService from '@/services/auth/forgotPasswordService';
+import ResetPasswordService from '@/services/auth/resetPasswordService';
+import PasswordService from '@/services/auth/passwordService';
 
-const stringValidator = new StringRequestFieldValidator();
+const stringValidator = new StringRequestFieldValidatorService();
 const fileValidator = new FileValidator();
 
 const usersService = new UsersService();
@@ -28,6 +30,9 @@ const cloudinaryManagementService = new CloudinaryManagementService();
 const tokenService = new TokenService();
 const sessionService = new SessionService();
 const emailService = new EmailService();
+const stringRequestFieldValidatorService = new StringRequestFieldValidatorService();
+const passwordService = new PasswordService();
+
 const passwordResetTokenService = new PasswordResetTokenService();
 const forgotPasswordService = new ForgotPasswordService({
   usersService,
@@ -52,7 +57,23 @@ const logoutService = new LogoutService({ tokenService, sessionService });
 
 const refreshTokenService = new RefreshTokenService({ tokenService, sessionService, usersService });
 
-const authController = new AuthController({ signupService, loginService, logoutService, refreshTokenService, forgotPasswordService });
+const resetPasswordService = new ResetPasswordService({
+  stringRequestFieldValidatorService,
+  tokenService,
+  passwordResetTokenService,
+  usersService,
+  passwordService,
+  sessionService
+});
+
+const authController = new AuthController({
+  signupService,
+  loginService,
+  logoutService,
+  refreshTokenService,
+  forgotPasswordService,
+  resetPasswordService
+});
 
 const authRouter = new AuthRouter(authController);
 

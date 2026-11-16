@@ -1,7 +1,7 @@
-import { type StringRequestFieldValidatorParams } from '@/types/services/validators/stringRequestFieldValidator';
+import { type StringRequestFieldValidatorServiceParams } from '@/types/services/validators/stringRequestFieldValidatorService';
 import AppError from '@/utils/appError';
 
-class StringRequestFieldValidator {
+class StringRequestFieldValidatorService {
   private handleResult({ errors, shouldThrowError }: {
     errors: string[];
     shouldThrowError: boolean
@@ -13,11 +13,11 @@ class StringRequestFieldValidator {
     return errors.join('. ');
   }
 
-  validate({ field, options = {}, shouldThrowError = false }: StringRequestFieldValidatorParams): string {
+  validate({ field, options = {}, fieldName, shouldThrowError = false }: StringRequestFieldValidatorServiceParams): string {
     const errors: string[] = [];
 
     if (typeof field !== 'string' || field.trim().length === 0) {
-      errors.push('Invalid field: text is required.');
+      errors.push(`Invalid ${fieldName ?? 'field'}: text is required.`);
       return this.handleResult({ errors, shouldThrowError });
     }
 
@@ -42,4 +42,4 @@ class StringRequestFieldValidator {
   }
 }
 
-export default StringRequestFieldValidator;
+export default StringRequestFieldValidatorService;

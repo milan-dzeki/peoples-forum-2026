@@ -13,6 +13,7 @@ class TokenService {
       .update(token)
       .digest('hex');
   }
+  
   createAccessToken(userId: string): string {
     return jwt.sign(
       { userId },
