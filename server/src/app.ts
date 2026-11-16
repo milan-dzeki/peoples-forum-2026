@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import { authRouter } from '@/containers';
+import { usersRouter } from '@/containers';
 import globalErrorHandler from './controllers/errorController';
 
 const app: Express = express();
@@ -17,6 +18,7 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 
 app.use('/api/v1/auth', authRouter.router);
+app.use('/api/v1/users', usersRouter.router);
 
 app.use(globalErrorHandler);
 

@@ -1,1 +1,2 @@
-export { authRouter, authController, signupService } from './authContainer';
+export { authRouter } from './authContainer';
+export { usersRouter } from './usersContainer';
