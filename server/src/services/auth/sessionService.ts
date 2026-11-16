@@ -1,16 +1,22 @@
+import type { ClientSession } from 'mongoose';
 import Session, { type SessionSchemaType } from '@/models/sessionModel';
+import AppError from '@/utils/appError';
 
 class SessionService {
-  async create(params: {
+  async create (params: {
     user: string;
     refreshTokenHash: string;
     expiresAt: Date;
-  }): Promise<SessionSchemaType> {
-    const session = await Session.create(params);
+  }, mongoSession?: ClientSession): Promise<SessionSchemaType> {
+    const [session] = await Session.create([params], ...(mongoSession ? [{ session: mongoSession }] : []));
+
+    if (!session) {
+      throw new AppError(500, 'Session creation failed.');
+    }
     return session;
   }
 
-  async rotate(params: {
+  async rotate (params: {
     oldTokenHash: string;
     newTokenHash: string;
     expiresAt: Date;
@@ -30,15 +36,15 @@ class SessionService {
     return updatedSession;
   }
 
-  async revoke(refreshTokenHash: string): Promise<void> {
+  async revoke (refreshTokenHash: string): Promise<void> {
     await Session.deleteOne({ refreshTokenHash });
   }
 
-  async revokeForAllDevices(refreshTokenHash: string): Promise<void> {
-    await Session.deleteMany({ refreshTokenHash });
+  async revokeForAllDevices (refreshTokenHash: string, mongoSession?: ClientSession): Promise<void> {
+    await Session.deleteMany({ refreshTokenHash }, { ...(mongoSession && { session: mongoSession }) });
   }
 
-  async findByTokenHash(tokenHash: string): Promise<SessionSchemaType | null> {
+  async findByTokenHash (tokenHash: string): Promise<SessionSchemaType | null> {
     return Session.findOne({ refreshTokenHash: tokenHash });
   }
 }

@@ -4,7 +4,7 @@ import type { CloudinaryFile } from '@/types/common';
 import AppError from '@/utils/appError';
 
 class CloudinaryManagementService {
-  constructor() {
+  constructor () {
     const {
       CLOUDINARY_CLOUD_NAME,
       CLOUDINARY_API_KEY,

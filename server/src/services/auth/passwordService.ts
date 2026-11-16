@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import AppError from '@/utils/appError';
 
 class PasswordService {
-  hashPassword = async (password: string): Promise<string> => {
+  async hashPassword (password: string): Promise<string> {
     try {
       const hashedPassword = await bcrypt.hash(password, 12);
       if (!hashedPassword) {
@@ -13,6 +13,10 @@ class PasswordService {
     } catch {
       throw new AppError(500, 'Failed to setup password. Try again.');
     }
+  }
+
+  async comparePasswords (password: string, hashedPassword: string): Promise<boolean> {
+    return await bcrypt.compare(password, hashedPassword);
   }
 }
 

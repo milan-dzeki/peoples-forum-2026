@@ -1,3 +1,4 @@
+import type { ClientSession } from 'mongoose';
 import type { UserSchemaType } from '@/models/users/userModel';
 import type { ResetPasswordExecuteParams } from '@/types/services/auth/resetPasswordService';
 import userModelValidationConfig from '@/dataConfigs/modelValidators/userModelValidationConfig';
@@ -8,6 +9,7 @@ import TokenService from './tokenService';
 import UsersService from '../usersService';
 import PasswordService from './passwordService';
 import SessionService from './sessionService';
+import withTransaction from '@/utils/withTansaction';
 
 interface Dependencies {
   stringRequestFieldValidatorService: StringRequestFieldValidatorService;
@@ -75,29 +77,40 @@ class ResetPasswordService {
     return { user, tokenHash };
   }
 
-  private async updateUser (user: UserSchemaType, newPassword: string): Promise<void> {
-    const { passwordService } = this.dependencies;
-
-    const hashedPassword = await passwordService.hashPassword(newPassword);
-    user.password = hashedPassword;
-    await user.save();
-  }
-
-  private async cleanDBTokens (userId: string, tokenHash: string): Promise<void> {
+  private async cleanDBTokens ({
+    userId,
+    tokenHash,
+    session
+  }: {
+    userId: string;
+    tokenHash: string;
+    session: ClientSession;
+  }): Promise<void> {
     const {
       passwordResetTokenService,
       sessionService
     } = this.dependencies;
 
-    await passwordResetTokenService.revoke(tokenHash);
-    await sessionService.revokeForAllDevices(userId);
-  };
+    await passwordResetTokenService.revoke(tokenHash, session);
+    await sessionService.revokeForAllDevices(userId, session);
+  }
 
   async execute (params: ResetPasswordExecuteParams): Promise<void> {
     const { validatedNewPassword, validatedToken } = this.validateFields(params);
     const { user, tokenHash } = await this.getValidatedDBData(validatedToken);
-    await this.updateUser(user, validatedNewPassword);
-    await this.cleanDBTokens(user._id.toString(), tokenHash);
+
+    const hashedPassword = await this.dependencies.passwordService.hashPassword(validatedNewPassword);
+
+    await withTransaction(async (session) => {
+      user.password = hashedPassword;
+      await user.save({ session });
+
+      await this.cleanDBTokens({
+        userId: user._id.toString(),
+        tokenHash,
+        session
+      });
+    });
   }
 }
 

@@ -1,4 +1,3 @@
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { isEmail } from 'validator';
 import User, { type UserSchemaType } from '@/models/users/userModel';
@@ -9,6 +8,7 @@ import { ResponseAuthUser } from '@/types/auth';
 import formatUserForResponse from '@/utils/formatUserForResponse';
 import TokenService from './tokenService';
 import SessionService from './sessionService';
+import PasswordService from './passwordService';
 
 const invalidCredentials = 'Invalid email or password provided.';
 
@@ -16,6 +16,7 @@ interface Dependencies {
   usersService: UsersService;
   tokenService: TokenService;
   sessionService: SessionService;
+  passwordService: PasswordService;
 }
 
 class LoginService {
@@ -36,8 +37,10 @@ class LoginService {
   }
 
   private async getAndValidateUser (email: string, password: string): Promise<UserSchemaType> {
-    const user = await this.dependencies.usersService.getByEmail(email);
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const { usersService, passwordService } = this.dependencies;
+
+    const user = await usersService.getByEmail(email);
+    const isPasswordValid = await passwordService.comparePasswords(password, user.password);
     if (!isPasswordValid) {
       throw new AppError(400, invalidCredentials);
     }
@@ -49,24 +52,31 @@ class LoginService {
     return user;
   }
 
-  async login (body: unknown) {
-    const { email, password } = this.validateBody(body);
-    const retrievedUser = await this.getAndValidateUser(email, password);
+  private async createTokens (userId: string): Promise<{ accessToken: string; refreshToken: string }> {
+    const { tokenService, sessionService } = this.dependencies;
 
-    const accessToken = this.dependencies.tokenService.createAccessToken(
-      retrievedUser._id.toString()
-    );
+    const accessToken = tokenService.createAccessToken(userId);
+    const refreshToken = tokenService.generateRandomToken();
+    const refreshTokenHash = tokenService.hashToken(refreshToken);
 
-    const refreshToken = this.dependencies.tokenService.generateRandomToken();
-
-    const refreshTokenHash = this.dependencies.tokenService.hashToken(refreshToken);
-
-    await this.dependencies.sessionService.create({
-      user: retrievedUser._id.toString(),
+    await sessionService.create({
+      user: userId,
       refreshTokenHash,
       expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)
     });
 
+    return { accessToken, refreshToken };
+  }
+
+  async login (body: unknown): Promise<{
+    user: ResponseAuthUser;
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const { email, password } = this.validateBody(body);
+    const retrievedUser = await this.getAndValidateUser(email, password);
+    const { accessToken, refreshToken } = await this.createTokens(retrievedUser._id.toString());
+    
     return {
       user: formatUserForResponse(retrievedUser),
       accessToken,
@@ -86,8 +96,10 @@ class LoginService {
 
     let decodedToken: string | jwt.JwtPayload;
 
+    const { tokenService } = this.dependencies;
+
     try {
-      decodedToken = this.dependencies.tokenService.verifyAccessToken(token);
+      decodedToken = tokenService.verifyAccessToken(token);
     } catch {
       return null;
     }

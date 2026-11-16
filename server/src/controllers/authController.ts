@@ -10,6 +10,7 @@ import RefreshTokenService from '@/services/auth/refreshTokenSrevice';
 import LogoutService from '@/services/auth/logoutService';
 import ForgotPasswordService from '@/services/auth/forgotPasswordService';
 import ResetPasswordService from '@/services/auth/resetPasswordService';
+import AppError from '@/utils/appError';
 
 interface Dependencies {
   signupService: SignupService;
@@ -28,7 +29,9 @@ class AuthController {
   ) => {
     const fields = request.fields as unknown as Record<string, string>;
     const files = request.files as unknown as ApiFilesType;
-    const { user, accessToken, refreshToken } = await this.dependencies.signupService.execute({ fields, files });
+
+    const { signupService } = this.dependencies;
+    const { user, accessToken, refreshToken } = await signupService.execute({ fields, files });
 
     setAuthCookies(response, { accessToken, refreshToken });
 
@@ -44,7 +47,9 @@ class AuthController {
     response: Response
   ) => {
     const body = request.body;
-    const { user, accessToken, refreshToken } = await this.dependencies.loginService.login(body);
+
+    const { loginService } = this.dependencies;
+    const { user, accessToken, refreshToken } = await loginService.login(body);
 
     setAuthCookies(response, { accessToken, refreshToken });
 
@@ -60,7 +65,8 @@ class AuthController {
     response: Response
   ) => {
     const refreshToken = request.cookies?.[REFRESH_TOKEN.name];
-    await this.dependencies.logoutService.execute(refreshToken);
+    const { logoutService } = this.dependencies;
+    await logoutService.execute(refreshToken);
 
     clearAuthCookies(response);
 
@@ -74,7 +80,9 @@ class AuthController {
     request: RequestWithBodyType,
     response: Response
   ) => {
-    const user = await this.dependencies.loginService.isLoggedIn(request.cookies);
+    const { loginService } = this.dependencies;
+
+    const user = await loginService.isLoggedIn(request.cookies);
     return response.status(user ? 200 : 201).json({ user });
   }
 
@@ -83,29 +91,39 @@ class AuthController {
     response: Response
   ) => {
     const refreshToken = request.cookies?.[REFRESH_TOKEN.name];
+    const { refreshTokenService } = this.dependencies;
 
-    const {
-      user,
-      accessToken,
-      refreshToken: newRefreshToken
-    } = await this.dependencies.refreshTokenService.execute(refreshToken);
+    try {
+      const {
+        user,
+        accessToken,
+        refreshToken: newRefreshToken
+      } = await refreshTokenService.execute(refreshToken);
 
-    setAuthCookies(response, {
-      accessToken,
-      refreshToken: newRefreshToken
-    });
+      setAuthCookies(response, {
+        accessToken,
+        refreshToken: newRefreshToken
+      });
 
-    return response.status(200).json({
-      status: 'success',
-      data: { user }
-    });
+      return response.status(200).json({
+        status: 'success',
+        data: { user }
+      });
+    } catch (error) {
+      if (error instanceof AppError && error.statusCode === 401) {
+        clearAuthCookies(response);
+      }
+
+      throw error;
+    }
   });
 
   forgotPassword = catchAsync(async (
     request: RequestWithBodyType,
     response: Response
   ) => {
-    await this.dependencies.forgotPasswordService.execute(
+    const { forgotPasswordService } = this.dependencies;
+    await forgotPasswordService.execute(
       request.body.email
     );
 
@@ -119,7 +137,9 @@ class AuthController {
     request: RequestWithBodyType,
     response: Response
   ) => {
-    await this.dependencies.resetPasswordService.execute({
+    const { resetPasswordService } = this.dependencies;
+
+    await resetPasswordService.execute({
       newPassword: request.body?.newPassword,
       newPasswordConfirm: request.body?.newPasswordConfirm,
       token: request.body?.token

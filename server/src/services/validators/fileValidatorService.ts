@@ -1,8 +1,8 @@
-import type { ValidatableFile } from '@/types/services/validators/fileValidator';
+import type { ValidatableFile } from '@/types/services/validators/fileValidatorService';
 import AppError from '@/utils/appError';
 
-class FileValidator {
-  private handleResult({ errors, shouldThrowError }: {
+class FileValidatorService {
+  private handleResult ({ errors, shouldThrowError }: {
     errors: string[];
     shouldThrowError: boolean
   }): string {
@@ -13,7 +13,7 @@ class FileValidator {
     return errors.join('. ');
   }
 
-  private isValidatableFile(file: unknown): file is ValidatableFile {
+  private isValidatableFile (file: unknown): file is ValidatableFile {
     if (typeof file !== 'object' || file === null) {
       return false;
     }
@@ -27,7 +27,7 @@ class FileValidator {
     );
   }
 
-  validate({
+  validate ({
     file,
     maxAllowedSize,
     allowedTypes,
@@ -67,4 +67,4 @@ class FileValidator {
   }
 }
 
-export default FileValidator;
+export default FileValidatorService;

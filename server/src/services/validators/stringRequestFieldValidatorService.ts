@@ -2,7 +2,7 @@ import { type StringRequestFieldValidatorServiceParams } from '@/types/services/
 import AppError from '@/utils/appError';
 
 class StringRequestFieldValidatorService {
-  private handleResult({ errors, shouldThrowError }: {
+  private handleResult ({ errors, shouldThrowError }: {
     errors: string[];
     shouldThrowError: boolean
   }): string {
@@ -13,7 +13,7 @@ class StringRequestFieldValidatorService {
     return errors.join('. ');
   }
 
-  validate({ field, options = {}, fieldName, shouldThrowError = false }: StringRequestFieldValidatorServiceParams): string {
+  validate ({ field, options = {}, fieldName, shouldThrowError = false }: StringRequestFieldValidatorServiceParams): string {
     const errors: string[] = [];
 
     if (typeof field !== 'string' || field.trim().length === 0) {

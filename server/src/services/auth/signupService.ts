@@ -1,30 +1,33 @@
 import { isEmail } from 'validator';
-import bcrypt from 'bcryptjs';
+import type { UserSchemaType } from '@/models/users/userModel';
 import type { SignupRequestFields, SignupServiceParams } from '@/types/services/auth/signupService';
 import type { CreateUserData } from '@/types/services/usersService';
 import { SIGNUP_ALLOWED_FIELD_NAMES } from '@/constants/users';
 import { PHOTO_FILE_VALIDATION } from '@/dataConfigs/fileValidationConfigs';
 import { RESOURCE_TYPES } from '@/constants/cloudinary';
+import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import AppError from '@/utils/appError';
 import StringRequestFieldValidatorService from '@/services/validators/stringRequestFieldValidatorService';
 import userModelValidationConfig from '@/dataConfigs/modelValidators/userModelValidationConfig';
 import UsersService from '@/services/usersService';
 import ErrorsService from '@/services/errorsService';
-import FileValidator from '@/services/validators/fileValidator';
+import FileValidatorService from '@/services/validators/fileValidatorService';
 import CloudinaryManagementService from '@/services/cloudinaryManagementService';
-import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import SessionService from './sessionService';
 import formatUserForResponse from '@/utils/formatUserForResponse';
 import TokenService from './tokenService';
+import PasswordService from './passwordService';
+import withTransaction from '@/utils/withTansaction';
 
 interface Dependencies {
-  stringValidator: StringRequestFieldValidatorService;
-  fileValidator: FileValidator;
+  stringValidatorService: StringRequestFieldValidatorService;
+  fileValidatorService: FileValidatorService;
   usersService: UsersService;
   errorsService: ErrorsService;
   cloudinaryManagementService: CloudinaryManagementService;
   tokenService: TokenService;
   sessionService: SessionService;
+  passwordService: PasswordService;
 }
 
 class SignupService {
@@ -41,7 +44,9 @@ class SignupService {
       return email.invalidEmailErrorMsg;
     }
 
-    const emailTaken = await this.dependencies.usersService.isEmailTaken(providedEmail)
+    const { usersService } = this.dependencies;
+
+    const emailTaken = await usersService.isEmailTaken(providedEmail)
 
     if (emailTaken) {
       return email.emailExistsInDatabaseErrorMsg;
@@ -84,8 +89,14 @@ class SignupService {
     const passwordConfirmVal = fields.passwordConfirm ?? '';
     const profileImageFile = files?.profileImage;
 
+    const  {
+      stringValidatorService,
+      fileValidatorService,
+      errorsService
+    } = this.dependencies;
+
     const errors = {
-      firstName: this.dependencies.stringValidator.validate({
+      firstName: stringValidatorService.validate({
         field: firstNameVal,
         options: {
           minLength: firstName.minLength,
@@ -93,7 +104,7 @@ class SignupService {
           maxWordsAllowed: firstName.maxWordsAllowed,
         },
       }),
-      lastName: this.dependencies.stringValidator.validate({
+      lastName: stringValidatorService.validate({
         field: lastNameVal,
         options: {
           minLength: lastName.minLength,
@@ -102,7 +113,7 @@ class SignupService {
         },
       }),
       email: await this.validateEmail(emailVal),
-      password: this.dependencies.stringValidator.validate({
+      password: stringValidatorService.validate({
         field: passwordVal,
         options: {
           minLength: password.minLength,
@@ -115,7 +126,7 @@ class SignupService {
       ),
       ...(profileImageFile
         ? {
-            profilePhoto: this.dependencies.fileValidator.validate({
+            profilePhoto: fileValidatorService.validate({
               file: profileImageFile,
               maxAllowedSize: PHOTO_FILE_VALIDATION.allowedSize,
               allowedTypes: PHOTO_FILE_VALIDATION.allowedTypes,
@@ -126,7 +137,7 @@ class SignupService {
     };
 
 
-    this.dependencies.errorsService.throwFieldsErrorIfDataInvalid(errors);
+    errorsService.throwFieldsErrorIfDataInvalid(errors);
 
     return {
       fields: {
@@ -139,23 +150,12 @@ class SignupService {
     };
   }
 
-  private async hashPassword (password: string): Promise<string> {
-    try {
-      const hashedPassword = await bcrypt.hash(password, 12);
-      if (!hashedPassword) {
-        throw new AppError(500, 'Failed to setup password. Try again.');
-      }
+  private async prepareUserData ({ fields, file }: { fields: SignupRequestFields; file: File & { path: string } | undefined }): Promise<CreateUserData> {
+    const { passwordService, cloudinaryManagementService } = this.dependencies;
 
-      return hashedPassword;
-    } catch {
-      throw new AppError(500, 'Failed to setup password. Try again.');
-    }
-  }
-
-  private async prepareUserData({ fields, file }: { fields: SignupRequestFields; file: File & { path: string } | undefined }): Promise<CreateUserData> {
-    const hashedPassword = await this.hashPassword(fields.password);
+    const hashedPassword = await passwordService.hashPassword(fields.password);
     const uploadedProfilePhoto = file
-      ? await this.dependencies.cloudinaryManagementService.uploadSingleFile({ file, resourceType: RESOURCE_TYPES.IMAGE })
+      ? await cloudinaryManagementService.uploadSingleFile({ file, resourceType: RESOURCE_TYPES.IMAGE })
       : { secure_url: null, public_id: null };
 
     return {
@@ -169,8 +169,15 @@ class SignupService {
     };
   }
 
-  async execute(request: SignupServiceParams) {
+  async execute (request: SignupServiceParams) {
     let profileImagePublicIdForCleanUp: string | null = null;
+
+    const {
+      usersService,
+      tokenService,
+      sessionService,
+      cloudinaryManagementService
+    } = this.dependencies;
 
     try {
       const validatedData = await this.validate(request);
@@ -178,22 +185,26 @@ class SignupService {
       const createData = await this.prepareUserData(validatedData);
       profileImagePublicIdForCleanUp = createData.profileImagePublicId || null;
 
-      const newUser = await this.dependencies.usersService.create(createData);
+      const refreshToken = tokenService.generateRandomToken();
+      const refreshTokenHash = tokenService.hashToken(refreshToken);
 
-      const accessToken = this.dependencies.tokenService.createAccessToken(
+      const newUser = await withTransaction<UserSchemaType>(async (session) => {
+        const user = await usersService.create(createData, session);
+
+        await sessionService.create({
+          user: user._id.toString(),
+          refreshTokenHash,
+          expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)
+        }, session);
+
+        return user;
+      });
+      
+
+      const accessToken = tokenService.createAccessToken(
         newUser._id.toString()
       );
   
-      const refreshToken = this.dependencies.tokenService.generateRandomToken();
-  
-      const refreshTokenHash = this.dependencies.tokenService.hashToken(refreshToken);
-  
-      await this.dependencies.sessionService.create({
-        user: newUser._id.toString(),
-        refreshTokenHash,
-        expiresAt: new Date(Date.now() + REFRESH_TOKEN.duration)
-      });
-
       return {
         user: formatUserForResponse(newUser),
         accessToken,
@@ -201,7 +212,7 @@ class SignupService {
       };
     } catch (error: unknown) {
       if (profileImagePublicIdForCleanUp) {
-        await this.dependencies.cloudinaryManagementService.deleteSingleFile({
+        await cloudinaryManagementService.deleteSingleFile({
           publicId: profileImagePublicIdForCleanUp,
           resourceType: RESOURCE_TYPES.IMAGE
         });
