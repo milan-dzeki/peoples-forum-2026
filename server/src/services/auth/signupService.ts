@@ -20,7 +20,7 @@ import PasswordService from './passwordService';
 import withTransaction from '@/utils/withTansaction';
 
 interface Dependencies {
-  stringValidatorService: StringRequestFieldValidatorService;
+  stringRequestFieldValidatorService: StringRequestFieldValidatorService;
   fileValidatorService: FileValidatorService;
   usersService: UsersService;
   errorsService: ErrorsService;
@@ -90,13 +90,13 @@ class SignupService {
     const profileImageFile = files?.profileImage;
 
     const  {
-      stringValidatorService,
+      stringRequestFieldValidatorService,
       fileValidatorService,
       errorsService
     } = this.dependencies;
 
     const errors = {
-      firstName: stringValidatorService.validate({
+      firstName: stringRequestFieldValidatorService.validate({
         field: firstNameVal,
         options: {
           minLength: firstName.minLength,
@@ -104,7 +104,7 @@ class SignupService {
           maxWordsAllowed: firstName.maxWordsAllowed,
         },
       }),
-      lastName: stringValidatorService.validate({
+      lastName: stringRequestFieldValidatorService.validate({
         field: lastNameVal,
         options: {
           minLength: lastName.minLength,
@@ -113,7 +113,7 @@ class SignupService {
         },
       }),
       email: await this.validateEmail(emailVal),
-      password: stringValidatorService.validate({
+      password: stringRequestFieldValidatorService.validate({
         field: passwordVal,
         options: {
           minLength: password.minLength,
