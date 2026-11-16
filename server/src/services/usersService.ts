@@ -111,6 +111,25 @@ class UsersService {
 
     return user.profileImageUrl;
   }
+
+  async removeProfileImage (userId: string): Promise<void> {
+    const user = await this.getByIdAndThrowIfNotFound(userId);
+    if (!user.profileImageUrl || !user.profileImagePublicId) {
+      throw new AppError(404, 'No image to remove');
+    }
+
+    const { cloudinaryManagementService } = this.dependencies;
+
+    await cloudinaryManagementService.deleteSingleFile({
+      publicId: user.profileImagePublicId,
+      resourceType: RESOURCE_TYPES.IMAGE,
+      shouldThrowError: true
+    });
+
+    user.profileImageUrl = null;
+    user.profileImagePublicId = null;
+    await user.save();
+  }
 }
 
 export default UsersService;

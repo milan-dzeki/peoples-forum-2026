@@ -21,7 +21,8 @@ class UsersRouter {
     this.router.use(authMiddlewares.isAuth);
 
     this.router.patch('/me/names', usersController.updateNames);
-    this.router.patch('/me/profile-image', formidable(), usersController.updateProfileImage);
+    this.router.post('/me/profile-image', formidable(), usersController.updateProfileImage);
+    this.router.patch('/me/profile-image', usersController.removeProfileImage);
   }
 }
 

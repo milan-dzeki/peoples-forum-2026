@@ -44,6 +44,19 @@ class UsersController {
       }
     });
   });
+
+  removeProfileImage = catchAsync (async (
+    request: RequestWithUserId,
+    response: Response
+  ) => {
+    const userId = request.userId;
+    await this.userService.removeProfileImage(userId);
+
+    return response.status(200).json({
+      status: 'success',
+      message: 'Profile image removed successfully.'
+    });
+  });
 }
 
 export default UsersController;
