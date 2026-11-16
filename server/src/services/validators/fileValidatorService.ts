@@ -1,7 +1,7 @@
-import type { ValidatableFile } from '@/types/services/validators/fileValidator';
+import type { ValidatableFile } from '@/types/services/validators/fileValidatorService';
 import AppError from '@/utils/appError';
 
-class FileValidator {
+class FileValidatorService {
   private handleResult({ errors, shouldThrowError }: {
     errors: string[];
     shouldThrowError: boolean
@@ -67,4 +67,4 @@ class FileValidator {
   }
 }
 
-export default FileValidator;
+export default FileValidatorService;

@@ -9,7 +9,7 @@ import CloudinaryManagementService from '@/services/cloudinaryManagementService'
 
 // Validators
 import StringRequestFieldValidatorService from '@/services/validators/stringRequestFieldValidatorService';
-import FileValidator from '@/services/validators/fileValidator';
+import FileValidatorService from '@/services/validators/fileValidatorService';
 import LoginService from '@/services/auth/loginService';
 import TokenService from '@/services/auth/tokenService';
 import SessionService from '@/services/auth/sessionService';
@@ -21,8 +21,8 @@ import ForgotPasswordService from '@/services/auth/forgotPasswordService';
 import ResetPasswordService from '@/services/auth/resetPasswordService';
 import PasswordService from '@/services/auth/passwordService';
 
-const stringValidator = new StringRequestFieldValidatorService();
-const fileValidator = new FileValidator();
+const stringValidatorService = new StringRequestFieldValidatorService();
+const fileValidatorService = new FileValidatorService();
 
 const usersService = new UsersService();
 const errorsService = new ErrorsService();
@@ -42,8 +42,8 @@ const forgotPasswordService = new ForgotPasswordService({
 });
 
 const signupService = new SignupService({
-  stringValidator,
-  fileValidator,
+  stringValidatorService,
+  fileValidatorService,
   usersService,
   errorsService,
   cloudinaryManagementService,

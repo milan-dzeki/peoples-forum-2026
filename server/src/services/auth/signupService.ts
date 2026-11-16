@@ -10,7 +10,7 @@ import StringRequestFieldValidatorService from '@/services/validators/stringRequ
 import userModelValidationConfig from '@/dataConfigs/modelValidators/userModelValidationConfig';
 import UsersService from '@/services/usersService';
 import ErrorsService from '@/services/errorsService';
-import FileValidator from '@/services/validators/fileValidator';
+import FileValidatorService from '@/services/validators/fileValidatorService';
 import CloudinaryManagementService from '@/services/cloudinaryManagementService';
 import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import SessionService from './sessionService';
@@ -18,8 +18,8 @@ import formatUserForResponse from '@/utils/formatUserForResponse';
 import TokenService from './tokenService';
 
 interface Dependencies {
-  stringValidator: StringRequestFieldValidatorService;
-  fileValidator: FileValidator;
+  stringValidatorService: StringRequestFieldValidatorService;
+  fileValidatorService: FileValidatorService;
   usersService: UsersService;
   errorsService: ErrorsService;
   cloudinaryManagementService: CloudinaryManagementService;
@@ -85,7 +85,7 @@ class SignupService {
     const profileImageFile = files?.profileImage;
 
     const errors = {
-      firstName: this.dependencies.stringValidator.validate({
+      firstName: this.dependencies.stringValidatorService.validate({
         field: firstNameVal,
         options: {
           minLength: firstName.minLength,
@@ -93,7 +93,7 @@ class SignupService {
           maxWordsAllowed: firstName.maxWordsAllowed,
         },
       }),
-      lastName: this.dependencies.stringValidator.validate({
+      lastName: this.dependencies.stringValidatorService.validate({
         field: lastNameVal,
         options: {
           minLength: lastName.minLength,
@@ -102,7 +102,7 @@ class SignupService {
         },
       }),
       email: await this.validateEmail(emailVal),
-      password: this.dependencies.stringValidator.validate({
+      password: this.dependencies.stringValidatorService.validate({
         field: passwordVal,
         options: {
           minLength: password.minLength,
@@ -115,7 +115,7 @@ class SignupService {
       ),
       ...(profileImageFile
         ? {
-            profilePhoto: this.dependencies.fileValidator.validate({
+            profilePhoto: this.dependencies.fileValidatorService.validate({
               file: profileImageFile,
               maxAllowedSize: PHOTO_FILE_VALIDATION.allowedSize,
               allowedTypes: PHOTO_FILE_VALIDATION.allowedTypes,
