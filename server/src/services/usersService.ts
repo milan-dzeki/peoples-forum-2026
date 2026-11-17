@@ -80,7 +80,7 @@ class UsersService {
     const user = await this.getByIdAndThrowIfNotFound(userId);
     user.firstName = (firstName as string).trim();
     user.lastName = (lastName as string).trim();
-    user.fullName = `${firstName} ${lastName}`;
+    user.fullName = `${user.firstName} ${user.lastName}`;
     await user.save();
 
     return {
@@ -108,13 +108,13 @@ class UsersService {
 
     try {
       await user.save();
-    } catch {
-      if (oldProfileImagePublicId) {
-        await cloudinaryManagementService.deleteSingleFile({
-          publicId: uploadedProfileImage.public_id,
-          resourceType: RESOURCE_TYPES.IMAGE
-        });
-      }
+    } catch (error: unknown) {
+      await cloudinaryManagementService.deleteSingleFile({
+        publicId: uploadedProfileImage.public_id,
+        resourceType: RESOURCE_TYPES.IMAGE
+      });
+
+      throw error;
     }
 
     if (oldProfileImagePublicId) {
@@ -135,15 +135,17 @@ class UsersService {
 
     const { cloudinaryManagementService } = this.dependencies;
 
-    await cloudinaryManagementService.deleteSingleFile({
-      publicId: user.profileImagePublicId,
-      resourceType: RESOURCE_TYPES.IMAGE,
-      shouldThrowError: true
-    });
+    const oldProfileImagePublicId = user.profileImagePublicId;
 
     user.profileImageUrl = null;
     user.profileImagePublicId = null;
     await user.save();
+
+    await cloudinaryManagementService.deleteSingleFile({
+      publicId: oldProfileImagePublicId,
+      resourceType: RESOURCE_TYPES.IMAGE,
+      shouldThrowError: true
+    });
   }
 
   async changePassword ({
