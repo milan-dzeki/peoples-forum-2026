@@ -3,31 +3,28 @@ import type { UserSchemaType } from '@/models/users/userModel';
 import type { SignupRequestFields, SignupServiceParams } from '@/types/services/auth/signupService';
 import type { CreateUserData } from '@/types/services/usersService';
 import { SIGNUP_ALLOWED_FIELD_NAMES } from '@/constants/users';
-import { PHOTO_FILE_VALIDATION } from '@/dataConfigs/fileValidationConfigs';
 import { RESOURCE_TYPES } from '@/constants/cloudinary';
 import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import AppError from '@/utils/appError';
-import StringRequestFieldValidatorService from '@/services/validators/stringRequestFieldValidatorService';
 import userModelValidationConfig from '@/dataConfigs/modelValidators/userModelValidationConfig';
 import UsersService from '@/services/usersService';
 import ErrorsService from '@/services/errorsService';
-import FileValidatorService from '@/services/validators/fileValidatorService';
 import CloudinaryManagementService from '@/services/cloudinaryManagementService';
 import SessionService from './sessionService';
 import formatUserForResponse from '@/utils/formatUserForResponse';
 import TokenService from './tokenService';
 import PasswordService from './passwordService';
 import withTransaction from '@/utils/withTansaction';
+import UserFieldsValidatorService from '../validators/userFieldsValidatorService';
 
 interface Dependencies {
-  stringValidatorService: StringRequestFieldValidatorService;
-  fileValidatorService: FileValidatorService;
   usersService: UsersService;
   errorsService: ErrorsService;
   cloudinaryManagementService: CloudinaryManagementService;
   tokenService: TokenService;
   sessionService: SessionService;
   passwordService: PasswordService;
+  userFieldsValidatorService: UserFieldsValidatorService;
 }
 
 class SignupService {
@@ -55,20 +52,6 @@ class SignupService {
     return '';
   }
 
-  private validatePasswordConfirmation(providedPassword: unknown, providedPasswordConfirm: unknown): string {
-    const { passwordConfirm } = userModelValidationConfig;
-
-    if (!providedPasswordConfirm || typeof providedPasswordConfirm !== 'string') {
-      return passwordConfirm.requiredErrorMsg;
-    }
-
-    if (providedPassword !== providedPasswordConfirm) {
-      return passwordConfirm.passwordsNotSameErrorMgs;
-    }
-
-    return '';
-  }
-
   private async validate (request: SignupServiceParams): Promise<{ fields: SignupRequestFields; file: File & { path: string } | undefined }> {
     if (!request || !request.fields) {
       throw new AppError(400, 'Request invalid. No data found');
@@ -80,8 +63,6 @@ class SignupService {
 
     const { fields, files } = request;
 
-    const { firstName, lastName, password } = userModelValidationConfig;
-
     const firstNameVal = fields.firstName?.trim() ?? '';
     const lastNameVal = fields.lastName?.trim() ?? '';
     const emailVal = fields.email?.trim().toLowerCase() ?? '';
@@ -90,48 +71,22 @@ class SignupService {
     const profileImageFile = files?.profileImage;
 
     const  {
-      stringValidatorService,
-      fileValidatorService,
+      userFieldsValidatorService,
       errorsService
     } = this.dependencies;
 
     const errors = {
-      firstName: stringValidatorService.validate({
-        field: firstNameVal,
-        options: {
-          minLength: firstName.minLength,
-          maxLength: firstName.maxLength,
-          maxWordsAllowed: firstName.maxWordsAllowed,
-        },
-      }),
-      lastName: stringValidatorService.validate({
-        field: lastNameVal,
-        options: {
-          minLength: lastName.minLength,
-          maxLength: lastName.maxLength,
-          maxWordsAllowed: lastName.maxWordsAllowed,
-        },
-      }),
+      firstName: userFieldsValidatorService.firstName(firstNameVal),
+      lastName: userFieldsValidatorService.lastName(lastNameVal),
       email: await this.validateEmail(emailVal),
-      password: stringValidatorService.validate({
-        field: passwordVal,
-        options: {
-          minLength: password.minLength,
-          maxLength: password.maxLength,
-        },
+      password: userFieldsValidatorService.password(passwordVal),
+      passwordConfirm: userFieldsValidatorService.passwordConfirm({
+        providedPassword: passwordVal,
+        providedPasswordConfirm: passwordConfirmVal,
       }),
-      passwordConfirm: this.validatePasswordConfirmation(
-        passwordVal,
-        passwordConfirmVal,
-      ),
       ...(profileImageFile
         ? {
-            profilePhoto: fileValidatorService.validate({
-              file: profileImageFile,
-              maxAllowedSize: PHOTO_FILE_VALIDATION.allowedSize,
-              allowedTypes: PHOTO_FILE_VALIDATION.allowedTypes,
-              entityName: 'Profile image',
-            }),
+            profilePhoto: userFieldsValidatorService.profilePhoto(profileImageFile)
           }
         : {}),
     };

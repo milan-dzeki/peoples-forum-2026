@@ -5,10 +5,10 @@ import userModelValidationConfig from '@/dataConfigs/modelValidators/userModelVa
 import AppError from '@/utils/appError';
 import StringRequestFieldValidatorService from '../validators/stringRequestFieldValidatorService';
 import PasswordResetTokenService from './passwordResetTokenService';
-import TokenService from './tokenService';
-import UsersService from '../usersService';
-import PasswordService from './passwordService';
-import SessionService from './sessionService';
+import TokenService from '@/services/auth/tokenService';
+import UsersService from '@/services/usersService';
+import PasswordService from '@/services/auth/passwordService';
+import SessionService from '@/services/auth/sessionService';
 import withTransaction from '@/utils/withTansaction';
 
 interface Dependencies {

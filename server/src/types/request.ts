@@ -12,9 +12,17 @@ export interface RequestWithBodyType extends Request {
   }
 }
 
-export type ControllerType = (
-  req: RequestWithBodyType,
+export type ControllerType<R extends Request> = (
+  req: R,
   res: Response,
   next: NextFunction
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => Promise<Response<any, Record<string, any>> | undefined>;
+
+export interface RequestWithUserId extends Request {
+  userId: string;
+}
+
+export interface RequestWithUserIdAndFiles extends RequestWithFiles {
+  userId: string;
+}

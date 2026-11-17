@@ -40,8 +40,8 @@ class SessionService {
     await Session.deleteOne({ refreshTokenHash });
   }
 
-  async revokeForAllDevices (refreshTokenHash: string, mongoSession?: ClientSession): Promise<void> {
-    await Session.deleteMany({ refreshTokenHash }, { ...(mongoSession && { session: mongoSession }) });
+  async revokeForAllDevices (userId: string, mongoSession?: ClientSession): Promise<void> {
+    await Session.deleteMany({ user: userId }, { ...(mongoSession && { session: mongoSession }) });
   }
 
   async findByTokenHash (tokenHash: string): Promise<SessionSchemaType | null> {
