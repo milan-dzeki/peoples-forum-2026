@@ -23,7 +23,8 @@ class MeRouter {
     this.router.patch('/names', usersController.updateNames);
     this.router.post('/profile-image', formidable(), usersController.updateProfileImage);
     this.router.patch('/profile-image', usersController.removeProfileImage);
-    this.router.patch('/password', usersController.changePassword)
+    this.router.patch('/password', usersController.changePassword);
+    this.router.patch('/deactivation', usersController.deactivateAccount);
   }
 }
 

@@ -3,7 +3,7 @@ import type { Response, NextFunction, Request } from 'express';
 import AppError from '@/utils/appError';
 import { ACCESS_TOKEN } from '@/dataConfigs/tokens';
 import TokenService from '@/services/auth/tokenService';
-import UsersService from '@/services/user/usersService';
+import UsersService from '@/services/usersService';
 
 const notLoggedInErrorMsg = new AppError(401, 'You are not logged in or your session has expired.');
 
@@ -45,6 +45,11 @@ class AuthMiddlewares {
 
       if (!user) {
         next(notLoggedInErrorMsg);
+        return;
+      }
+
+      if (user.deactivated) {
+        next(new AppError(403, 'Your account has been deactivated.'));
         return;
       }
 

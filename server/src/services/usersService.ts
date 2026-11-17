@@ -168,6 +168,21 @@ class UsersService {
       await sessionService.revokeForAllDevices(user._id.toString(), mongoSession);
     });
   }
+
+  async deactivateAccount (userId: string, password: unknown): Promise<void> {
+    const user = await this.getByIdAndThrowIfNotFound(userId, `+${PASSWORD}`);
+
+    const { userFieldsValidatorService, sessionService } = this.dependencies;
+
+    await userFieldsValidatorService.currentPassword(user.password, password);
+
+    user.deactivated = true;
+
+    await withTransaction(async (mongoSession) => {
+      await user.save({ session: mongoSession });
+      await sessionService.revokeForAllDevices(user._id.toString(), mongoSession);
+    });
+  };
 }
 
 export default UsersService;

@@ -78,6 +78,21 @@ class UsersController {
       message: 'Password updated. You will be logged out from all devices. Use new password to log in again.'
     });
   });
+
+  deactivateAccount = catchAsync (async (
+    request: RequestWithUserId,
+    response: Response
+  ) => {
+    const userId = request.userId;
+    await this.userService.deactivateAccount(userId, request.body?.password);
+
+    clearAuthCookies(response);
+
+    return response.status(200).json({
+      status: 'success',
+      message: 'Account deactivated successfully. You will not be visible to people anymore. To activate back, just log in again.'
+    });
+  })
 }
 
 export default UsersController;
