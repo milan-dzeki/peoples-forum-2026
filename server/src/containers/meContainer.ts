@@ -1,6 +1,6 @@
 import UsersController from '@/controllers/usersController';
 import AuthMiddlewares from '@/middlewares/auth';
-import UsersRouter from '@/routes/usersRouter';
+import MeRouter from '@/routes/meRouter';
 import PasswordService from '@/services/auth/passwordService';
 import SessionService from '@/services/auth/sessionService';
 import TokenService from '@/services/auth/tokenService';
@@ -38,9 +38,9 @@ const authMiddlewares = new AuthMiddlewares({
   tokenService
 });
 
-const usersRouter = new UsersRouter({
+const meRouter = new MeRouter({
   usersController,
   authMiddlewares
 });
 
-export { usersRouter };
+export { meRouter };

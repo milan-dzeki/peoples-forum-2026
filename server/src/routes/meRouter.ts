@@ -8,7 +8,7 @@ interface Dependencies {
   authMiddlewares: AuthMiddlewares;
 }
 
-class UsersRouter {
+class MeRouter {
   public readonly router = Router();
 
   constructor(private readonly dependencies: Dependencies) {
@@ -20,11 +20,11 @@ class UsersRouter {
 
     this.router.use(authMiddlewares.isAuth);
 
-    this.router.patch('/me/names', usersController.updateNames);
-    this.router.post('/me/profile-image', formidable(), usersController.updateProfileImage);
-    this.router.patch('/me/profile-image', usersController.removeProfileImage);
-    this.router.patch('/me/password', usersController.changePassword)
+    this.router.patch('/names', usersController.updateNames);
+    this.router.post('/profile-image', formidable(), usersController.updateProfileImage);
+    this.router.patch('/profile-image', usersController.removeProfileImage);
+    this.router.patch('/password', usersController.changePassword)
   }
 }
 
-export default UsersRouter;
+export default MeRouter;
