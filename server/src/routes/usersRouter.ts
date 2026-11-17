@@ -5,7 +5,7 @@ import AuthMiddlewares from '@/middlewares/auth';
 
 interface Dependencies {
   usersController: UsersController;
-  authMiddlewares: AuthMiddlewares
+  authMiddlewares: AuthMiddlewares;
 }
 
 class UsersRouter {
@@ -23,6 +23,7 @@ class UsersRouter {
     this.router.patch('/me/names', usersController.updateNames);
     this.router.post('/me/profile-image', formidable(), usersController.updateProfileImage);
     this.router.patch('/me/profile-image', usersController.removeProfileImage);
+    this.router.patch('/me/password', usersController.changePassword)
   }
 }
 

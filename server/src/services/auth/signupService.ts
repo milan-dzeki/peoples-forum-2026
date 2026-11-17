@@ -6,7 +6,6 @@ import { SIGNUP_ALLOWED_FIELD_NAMES } from '@/constants/users';
 import { RESOURCE_TYPES } from '@/constants/cloudinary';
 import { REFRESH_TOKEN } from '@/dataConfigs/tokens';
 import AppError from '@/utils/appError';
-import StringRequestFieldValidatorService from '@/services/validators/stringRequestFieldValidatorService';
 import userModelValidationConfig from '@/dataConfigs/modelValidators/userModelValidationConfig';
 import UsersService from '@/services/usersService';
 import ErrorsService from '@/services/errorsService';
@@ -19,7 +18,6 @@ import withTransaction from '@/utils/withTansaction';
 import UserFieldsValidatorService from '../validators/userFieldsValidatorService';
 
 interface Dependencies {
-  stringRequestFieldValidatorService: StringRequestFieldValidatorService;
   usersService: UsersService;
   errorsService: ErrorsService;
   cloudinaryManagementService: CloudinaryManagementService;
@@ -54,20 +52,6 @@ class SignupService {
     return '';
   }
 
-  private validatePasswordConfirmation(providedPassword: unknown, providedPasswordConfirm: unknown): string {
-    const { passwordConfirm } = userModelValidationConfig;
-
-    if (!providedPasswordConfirm || typeof providedPasswordConfirm !== 'string') {
-      return passwordConfirm.requiredErrorMsg;
-    }
-
-    if (providedPassword !== providedPasswordConfirm) {
-      return passwordConfirm.passwordsNotSameErrorMgs;
-    }
-
-    return '';
-  }
-
   private async validate (request: SignupServiceParams): Promise<{ fields: SignupRequestFields; file: File & { path: string } | undefined }> {
     if (!request || !request.fields) {
       throw new AppError(400, 'Request invalid. No data found');
@@ -79,8 +63,6 @@ class SignupService {
 
     const { fields, files } = request;
 
-    const { password } = userModelValidationConfig;
-
     const firstNameVal = fields.firstName?.trim() ?? '';
     const lastNameVal = fields.lastName?.trim() ?? '';
     const emailVal = fields.email?.trim().toLowerCase() ?? '';
@@ -90,7 +72,6 @@ class SignupService {
 
     const  {
       userFieldsValidatorService,
-      stringRequestFieldValidatorService,
       errorsService
     } = this.dependencies;
 
@@ -98,17 +79,11 @@ class SignupService {
       firstName: userFieldsValidatorService.firstName(firstNameVal),
       lastName: userFieldsValidatorService.lastName(lastNameVal),
       email: await this.validateEmail(emailVal),
-      password: stringRequestFieldValidatorService.validate({
-        field: passwordVal,
-        options: {
-          minLength: password.minLength,
-          maxLength: password.maxLength,
-        },
+      password: userFieldsValidatorService.password(passwordVal),
+      passwordConfirm: userFieldsValidatorService.passwordConfirm({
+        providedPassword: passwordVal,
+        providedPasswordConfirm: passwordConfirmVal,
       }),
-      passwordConfirm: this.validatePasswordConfirmation(
-        passwordVal,
-        passwordConfirmVal,
-      ),
       ...(profileImageFile
         ? {
             profilePhoto: userFieldsValidatorService.profilePhoto(profileImageFile)

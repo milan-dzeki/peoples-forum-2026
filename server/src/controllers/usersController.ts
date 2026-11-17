@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import type { RequestWithUserId, RequestWithUserIdAndFiles } from '@/types/request';
 import UsersService from '@/services/usersService';
 import catchAsync from '@/utils/catchAsync';
+import { clearAuthCookies } from '@/utils/authCookies';
 
 class UsersController {
   constructor (private readonly userService: UsersService) {}
@@ -55,6 +56,26 @@ class UsersController {
     return response.status(200).json({
       status: 'success',
       message: 'Profile image removed successfully.'
+    });
+  });
+
+  changePassword = catchAsync (async (
+    request: RequestWithUserId,
+    response: Response
+  ) => {
+    const userId = request.userId;
+    await this.userService.changePassword({
+      userId,
+      currentPassword: request.body?.currentPassword,
+      newPassword: request.body?.newPassword,
+      newPasswordConfirm: request.body?.newPasswordConfirm
+    });
+
+    clearAuthCookies(response);
+
+    return response.status(200).json({
+      status: 'success',
+      message: 'Password updated. You will be logged out from all devices. Use new password to log in again.'
     });
   });
 }
