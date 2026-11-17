@@ -37,14 +37,14 @@ class AuthMiddlewares {
 
       const { userId } = decodedToken;
       if (typeof userId !== 'string') {
-        next(notLoggedInErrorMsg);
+        next(new AppError(400, 'Invalid user data.'));
         return;
       }
 
       const user = await usersService.getById(userId);
 
       if (!user) {
-        next(notLoggedInErrorMsg);
+        next(new AppError(404, 'Account not found.'));
         return;
       }
 

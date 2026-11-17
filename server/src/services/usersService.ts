@@ -78,8 +78,8 @@ class UsersService {
     errorsService.throwFieldsErrorIfDataInvalid(errors);
 
     const user = await this.getByIdAndThrowIfNotFound(userId);
-    user.firstName = firstName as string;
-    user.lastName = lastName as string;
+    user.firstName = (firstName as string).trim();
+    user.lastName = (lastName as string).trim();
     user.fullName = `${firstName} ${lastName}`;
     await user.save();
 
@@ -105,7 +105,17 @@ class UsersService {
 
     user.profileImageUrl = uploadedProfileImage.secure_url;
     user.profileImagePublicId = uploadedProfileImage.public_id;
-    await user.save();
+
+    try {
+      await user.save();
+    } catch {
+      if (oldProfileImagePublicId) {
+        await cloudinaryManagementService.deleteSingleFile({
+          publicId: uploadedProfileImage.public_id,
+          resourceType: RESOURCE_TYPES.IMAGE
+        });
+      }
+    }
 
     if (oldProfileImagePublicId) {
       await cloudinaryManagementService.deleteSingleFile({
@@ -146,7 +156,7 @@ class UsersService {
     currentPassword: unknown;
     newPassword: unknown;
     newPasswordConfirm: unknown;
-  }) {
+  }): Promise<void> {
     const user = await this.getByIdAndThrowIfNotFound(userId, `+${PASSWORD}`);
 
     const { userFieldsValidatorService, sessionService, passwordService } = this.dependencies;
